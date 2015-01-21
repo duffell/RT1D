@@ -1,7 +1,0 @@
-Run using 2 MPI processes.
-Total time = 394 sec
-Number of cells = 8192
-Number of timesteps = 113317 (x2)
-Megazones per second = 4.71e+00
-Megazones per CPU second = 2.36e+00
-Time/zone/step = 2.12e-01 microseconds

@@ -4,11 +4,13 @@
 static double GAMMA_LAW = 0.0;
 static double RHO_FLOOR = 0.0;
 static double PRE_FLOOR = 0.0;
+static int USE_RT = 1;
 
 void setHydroParams( struct domain * theDomain ){
    GAMMA_LAW = theDomain->theParList.Adiabatic_Index;
    RHO_FLOOR = theDomain->theParList.Density_Floor;
    PRE_FLOOR = theDomain->theParList.Pressure_Floor;
+   USE_RT = theDomain->theParList.rt_flag;
 }
 
 double get_vr( double * prim ){
@@ -113,31 +115,30 @@ void source( double * prim , double * cons , double rp , double rm , double dVdt
 
 void source_alpha( double * prim , double * cons , double * grad_prim , double r , double dVdt ){
 
-   double A = 0.06;
-   double B = 1.0;
+   double A = 2e-5/1.7; //2e-5;//1e-4;
+   double B = 1.2;//0.9;
+   double D = 0.0;
 
    double gam = GAMMA_LAW;
-   double lambda = r;
+   double alpha = prim[AAA];
 
    double Pp = prim[PPP];
    double rho = prim[RHO];
    double P1 = grad_prim[PPP];
    double rho1 = grad_prim[RHO];
+ 
    double g2 = -P1*rho1;
    if( g2 < 0.0 ) g2 = 0.0;
-   double alpha = prim[AAA];
    double cs = sqrt(gam*fabs(Pp/rho));
-   double w = cs*sqrt(alpha);
 
-   cons[AAA] += ( A*sqrt(g2) - B*alpha*rho*w/lambda )*dVdt;
+   cons[AAA] += ( (A+B*alpha)*sqrt(g2) - D*rho*alpha*cs/r )*dVdt;
    if( cons[AAA] < 0. ) cons[AAA] = 0.;
 
 }
 
 double get_eta( double * prim , double * grad_prim , double r ){
 
-   double C = 1.5e-2;
-   double lambda = r;
+   double C = 0.06*1.7;//0.03;
    double gam = GAMMA_LAW;
 
    double cs = sqrt( gam*fabs(prim[PPP]/prim[RHO]) );
@@ -145,9 +146,10 @@ double get_eta( double * prim , double * grad_prim , double r ){
    double alpha = prim[AAA];
    if( alpha < 0.0 ) alpha = 0.0;
 
-   double w = cs*sqrt( alpha );
+   double u_eddy = cs*sqrt( alpha );
+   double lambda = r*sqrt(alpha);
    
-   double eta = C*w*lambda;
+   double eta = C*u_eddy*lambda;
 
    return( eta );
 
@@ -192,7 +194,7 @@ double mindt( double * prim , double w , double r , double dr ){
    double maxvr = cs + fabs( vr - w );
    double dt = dr/maxvr;
    double dt_eta = dr*dr/eta;
-   if( dt > dt_eta ) dt = dt_eta;
+   if( dt > dt_eta && USE_RT ) dt = dt_eta;
 
    return( dt );
 

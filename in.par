@@ -1,33 +1,32 @@
 
-//RT1D Parameter File//
 
 //Time Range//
-T_Start			0.0
-T_End			1.0
+T_Start			1e-5
+T_End			1.0 //3888000
 
 //Output Frequency//
-Num_Reports		100
+Num_Reports		10000
 Num_Snapshots		0
 Num_Checkpoints		0
-Use_Logtime		0
+Use_Logtime		1
 
 //Grid Dimensions//
-Num_R			8192
-R_Min			0.0
-R_Max			2.0
-Log_Zoning		0	//0=Uniform, 1=Log, 2=Hybrid
+Num_R			1024
+R_Min			1e-6 //1e14  //0.01
+R_Max			.5  //1e16  //2.0
+Log_Zoning		1	//0=Uniform, 1=Log, 2=Hybrid
 Log_Radius		0.25	//Only for option 2 of Log_Zoning
 
-Max_Aspect_Short        5.0     
-Max_Aspect_Long         4.0     //Aspect Ratio AMR Refinement Criteria
+Max_Aspect_Short        2.0 
+Max_Aspect_Long         10.0     //Aspect Ratio AMR Refinement Criteria
 
 //Numerical Parameters
 CFL			0.2
-PLM			1.5
+PLM			1.0
 Riemann_Solver		1	//0=HLL, 1=HLLC
-Mesh_Motion		0	//0=Fixed, 1=By Cell, 2=Riemann Solver
-Density_Floor		0.0
-Pressure_Floor		1e-8
+Mesh_Motion		1	//0=Fixed, 1=By Cell, 2=Riemann Solver
+Density_Floor		1e-5
+Pressure_Floor		1e-8 //1e6  //1e-8
 
 //Hydro Parameters
 Adiabatic_Index		1.666666667

@@ -12,7 +12,7 @@ void initial( double * prim , double r ){
    double E = 1.0;
    double M = 1.0;
 
-   double r0 = 0.1;
+   double r0 = 0.01;
    double rho0 = 1.0;
    double Pmin = 1e-5;
 
@@ -24,7 +24,7 @@ void initial( double * prim , double r ){
    double vmax = sqrt(10./3.*E/M);
 
    if( r < r0 ){
-      rho += M/V;
+      rho = M/V;
       v = vmax*r/r0;
       X = 1.0;
    }

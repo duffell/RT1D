@@ -51,7 +51,7 @@ void set_wcell( struct domain * theDomain ){
          double wL = get_vr( cL->prim );
          double wR = get_vr( cR->prim );
          w = .5*(wL + wR); 
-         if( i==0 && theDomain->rank==0 ) w = 2./3.*wR;
+         if( i==0 && theDomain->rank==0 ) w = wR*(cR->riph - .5*cR->dr)/(cL->riph);//0.0;//2./3.*wR;
       }
       cL->wiph = w;
    }
@@ -143,8 +143,9 @@ void add_source( struct domain * theDomain , double dt ){
 
    struct cell * theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
+   double grad[NUM_Q];
 
-   int i;
+   int i,q;
    for( i=0 ; i<Nr ; ++i ){
       struct cell * c = theCells+i;
       double rp = c->riph;
@@ -152,7 +153,18 @@ void add_source( struct domain * theDomain , double dt ){
       double r = get_moment_arm(rp,rm);
       double dV = get_dV(rp,rm);
       source( c->prim , c->cons , rp , rm , dV*dt );
-      source_alpha( c->prim , c->cons , c->grad , r , dV*dt );
+      int inside = i>0 && i<Nr-1;
+      for( q=0 ; q<NUM_Q ; ++q ){
+         if( inside ){
+            struct cell * cp = theCells+i+1;
+            struct cell * cm = theCells+i-1;
+            double dR = .5*cp->dr + c->dr + .5*cm->dr;
+            grad[q] = (cp->prim[q]-cm->prim[q])/dR;
+         }else{
+            grad[q] = 0.0;
+         }
+      }
+      source_alpha( c->prim , c->cons , grad , r , dV*dt );
    }   
 
 }
@@ -169,7 +181,7 @@ void longandshort( struct domain * theDomain , double * L , double * S , int * i
    int Nr0 = theDomain->theParList.Num_R;
    double dr0 = rmax/(double)Nr0;
    double dx0 = log(rmax/rmin)/Nr0;
-   int logscale = 0;
+   int logscale = theDomain->theParList.LogZoning;
 
    double Long  = 0.0; 
    double Short = 0.0; 

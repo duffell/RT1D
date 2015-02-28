@@ -17,9 +17,13 @@ void plm( struct domain * theDomain ){
    double PLM = theDomain->theParList.PLM;
    int i,q;
    for( i=0 ; i<Nr ; ++i ){
+      int im = i-1;
+      int ip = i+1;
+      if( i==0 ) im = 0;
+      if( i==Nr-1 ) ip = Nr-1;
       struct cell * c  = theCells+i;
-      struct cell * cL = theCells+i-1;
-      struct cell * cR = theCells+i+1;
+      struct cell * cL = theCells+im;
+      struct cell * cR = theCells+ip;
       double drL = cL->dr;
       double drC = c->dr;
       double drR = cR->dr;

@@ -249,7 +249,7 @@ void AMR( struct domain * theDomain ){
    int Nr = theDomain->Nr;
 
    if( S>MaxShort && rank == rS ){
-      printf("KILL! rank = %d\n",rank);
+      //printf("KILL! rank = %d\n",rank);
 
       int iSp = iS+1;
       int iSm = iS-1;
@@ -291,7 +291,7 @@ void AMR( struct domain * theDomain ){
 
    if( L>MaxLong && rank==rL ){
 
-      printf("FORGE! rank = %d\n",rank);
+      //printf("FORGE! rank = %d\n",rank);
       theDomain->Nr += 1;
       Nr = theDomain->Nr;
       theDomain->theCells = (struct cell *) realloc( theCells , Nr*sizeof(struct cell) );

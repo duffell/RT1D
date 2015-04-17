@@ -17,6 +17,7 @@ void output( struct domain * theDomain , char * filestart ){
 
    if( rank==0 ){
       FILE * pFile = fopen( filename , "w" );
+      fprintf(pFile,"#r           dr           Density      Pressure     Velocity     X            Alpha\n");
       fclose(pFile);
    }
    MPI_Barrier( MPI_COMM_WORLD );

@@ -51,7 +51,7 @@ void set_wcell( struct domain * theDomain ){
          double wL = get_vr( cL->prim );
          double wR = get_vr( cR->prim );
          w = .5*(wL + wR); 
-         if( i==0 && theDomain->rank==0 ) w = wR*(cR->riph - .5*cR->dr)/(cL->riph);//0.0;//2./3.*wR;
+         if( i==0 && theDomain->rank==0 ) w = wR*(cL->riph)/(cR->riph-.5*cR->dr);//*(cR->riph - .5*cR->dr)/(cL->riph);//0.0;//2./3.*wR;
       }
       cL->wiph = w;
    }
@@ -137,12 +137,14 @@ void radial_flux( struct domain * theDomain , double dt ){
 }
 
 void source( double * , double * , double , double , double );
+void source_nozz( double * , double * , double , double , double , double );
 void source_alpha( double * , double * , double * , double , double );
 
 void add_source( struct domain * theDomain , double dt ){
 
    struct cell * theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
+   double t = theDomain->t;
    double grad[NUM_Q];
 
    int i,q;
@@ -153,6 +155,7 @@ void add_source( struct domain * theDomain , double dt ){
       double r = get_moment_arm(rp,rm);
       double dV = get_dV(rp,rm);
       source( c->prim , c->cons , rp , rm , dV*dt );
+      source_nozz( c->prim , c->cons , rp , rm , t , dV*dt );
       int inside = i>0 && i<Nr-1;
       for( q=0 ; q<NUM_Q ; ++q ){
          if( inside ){

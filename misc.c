@@ -51,7 +51,7 @@ void set_wcell( struct domain * theDomain ){
          double wL = get_vr( cL->prim );
          double wR = get_vr( cR->prim );
          w = .5*(wL + wR); 
-         if( i==0 && theDomain->rank==0 ) w = wR*(cL->riph)/(cR->riph-.5*cR->dr);//*(cR->riph - .5*cR->dr)/(cL->riph);//0.0;//2./3.*wR;
+         if( i==0 && theDomain->rank==0 ) w = 0.5*wR*(cL->riph)/(cR->riph-.5*cR->dr);//*(cR->riph - .5*cR->dr)/(cL->riph);//0.0;//2./3.*wR;
       }
       cL->wiph = w;
    }
@@ -139,6 +139,7 @@ void radial_flux( struct domain * theDomain , double dt ){
 void source( double * , double * , double , double , double );
 void source_nozz( double * , double * , double , double , double , double );
 void source_alpha( double * , double * , double * , double , double );
+void gravity_addsrc( struct domain * , double );
 
 void add_source( struct domain * theDomain , double dt ){
 
@@ -169,6 +170,9 @@ void add_source( struct domain * theDomain , double dt ){
       }
       source_alpha( c->prim , c->cons , grad , r , dV*dt );
    }   
+
+   int gravity_flag = 1;
+   if( gravity_flag ) gravity_addsrc( theDomain , dt );
 
 }
 

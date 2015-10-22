@@ -104,7 +104,7 @@ void possiblyOutput( struct domain * theDomain , int override ){
    if( LogOut ) n0 = (int)( Nrpt*log(t/t_min)/log(t_fin/t_min) );
    if( theDomain->nrpt < n0 || override ){
       theDomain->nrpt = n0;
-//      report( theDomain );
+      report( theDomain );
       if( theDomain->rank==0 ) printf("t = %.3e\n",t);
    }
 

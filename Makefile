@@ -1,5 +1,5 @@
 
-INITIAL  = ejecta
+INITIAL  = hse
 HYDRO    = euler
 OUTPUT   = ascii
 
@@ -17,7 +17,7 @@ FLAGS = -O3 -Wall -g
 INC = -I$(H55)/include
 LIB = -L$(H55)/lib -lm -lhdf5
 
-OBJ = main.o mpisetup.o profiler.o readpar.o domain.o gridsetup.o geometry.o exchange.o misc.o timestep.o onestep.o riemann.o boundary.o plm.o $(INITIAL).o $(OUTPUT).o $(HYDRO).o #report.o
+OBJ = main.o mpisetup.o profiler.o report.o readpar.o domain.o gridsetup.o geometry.o exchange.o misc.o timestep.o onestep.o riemann.o boundary.o gravity.o nozzle.o plm.o $(INITIAL).o $(OUTPUT).o $(HYDRO).o #report.o
 
 default: rt1d
 

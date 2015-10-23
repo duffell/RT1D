@@ -62,6 +62,8 @@ struct cell{
    double grad[NUM_Q];
    double riph;
    double dr;
+   double miph;
+   double dm;
    double wiph;
 };
 

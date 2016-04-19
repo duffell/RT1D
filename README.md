@@ -11,7 +11,7 @@ The license for this code is GPL.  The GPL license should be contained in this d
 
 Please cite me if you use this work.  In particular, cite my paper, Duffell (2016):
 
-http://adsabs.harvard.edu/abs/2015arXiv150402200D
+http://adsabs.harvard.edu/abs/2016ApJ...821...76D
 
 One more thing: I posted this code because I believe in transparency in science, not because I am advertising this code or attempting to promote its extensive use.  I am happy to answer the occasional question, but I hope that you will attempt to solve most issues on your own.
 

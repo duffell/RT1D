@@ -1,11 +1,9 @@
 
 #include "paul.h"
 
-void grav_src( struct cell * c , double dt ){
+double get_dV( double , double );
 
-   double m  = c->cons[DDD];
-   double Sr = c->cons[SRR];
-
+double get_g( struct cell * c , double G ){
 
    double rp = c->riph;
    double rm = c->riph - c->dr;
@@ -13,7 +11,27 @@ void grav_src( struct cell * c , double dt ){
 
    double frac = (rp*rp*rp - rc*rc*rc)/(rp*rp*rp - rm*rm*rm);
 
-   double G = 1.0;
+//   double G = 1.0; 
+   double M = c->miph-frac*c->dm;
+   double r = rc;
+
+   return( -G*M/r/r );
+
+}
+
+void grav_src( struct cell * c , double G , double dVdt ){
+
+   double rho = c->prim[RHO];
+   double v   = c->prim[VRR];
+
+
+   double rp = c->riph;
+   double rm = c->riph - c->dr;
+   double rc = rp;//.5*(rp+rm);
+
+   double frac = 1.0;//(rp*rp*rp - rc*rc*rc)/(rp*rp*rp - rm*rm*rm);
+
+//   double G = 1.0;
    double M = c->miph-frac*c->dm;
    double r = rc;
    //double f = menc_force( x , r );
@@ -21,8 +39,8 @@ void grav_src( struct cell * c , double dt ){
 
    //printf("F=%e\n",m*f*dt);
 
-   c->cons[SRR] += m*f*dt;
-   c->cons[TAU] += Sr*f*dt;
+   c->cons[SRR] += rho*f*dVdt;
+   c->cons[TAU] += rho*v*f*dVdt;
 
 }
 
@@ -34,13 +52,14 @@ void aggregate_mass( struct domain * theDomain ){
    int Nr = theDomain->Nr;
    int Ng = theDomain->Ng;
 
-   double M=0;
+   double M = theDomain->point_mass;
    int i;
    int imin=Ng;
    if( rank==0 ) imin = 0;
 
-   for( i=0 ; i<Nr ; ++i ){
-      if( i>imin ) M += theCells[i].dm;
+   for( i=imin ; i<Nr ; ++i ){
+      //if( i>=imin ) M += theCells[i].dm;
+      M += theCells[i].dm;
       theCells[i].miph = M;
    }
 
@@ -55,8 +74,14 @@ void aggregate_mass( struct domain * theDomain ){
       if( rank==nrk ){
          Mtot_inner = Mrecv;
          Mtot += Mtot_inner;
+         if( nrk<size-1 ){
+            MPI_Send( &Mtot , 1 , MPI_DOUBLE , nrk+1 , 666 , MPI_COMM_WORLD );
+         }
       }
-      MPI_Scatter( &Mtot , 1 , MPI_DOUBLE , &Mrecv , 1 , MPI_DOUBLE , nrk , MPI_COMM_WORLD );
+      if( rank==nrk+1 ){
+         MPI_Status status;
+         MPI_Recv( &Mrecv , 1 , MPI_DOUBLE , nrk , 666 , MPI_COMM_WORLD , &status );
+      }
    }
 
    for( i=0 ; i<Nr ; ++i ){
@@ -72,10 +97,72 @@ void calculate_mass( struct domain * theDomain ){
 
    int i;
    for( i=0 ; i<Nr ; ++i ){
-      theCells[i].dm = theCells[i].cons[DDD];
+      struct cell * c = theCells+i;
+      double rp,rm;
+      rp = c->riph;
+      rm = 0.0;
+      if( i!=0 ) rm = theCells[i-1].riph;
+      double dV = get_dV( rp , rm ); 
+      c->dm = c->cons[DDD];//c->prim[RHO]*dV;
    }
 
    aggregate_mass( theDomain );
+
+}
+
+void calculate_pot( struct domain * theDomain ){
+   
+   calculate_mass( theDomain );
+
+   int rank=theDomain->rank;
+   int size=theDomain->size;
+
+   struct cell * theCells = theDomain->theCells;
+   double grav_G = theDomain->theParList.grav_G;
+   int Nr = theDomain->Nr;
+   int i;
+   double rmax = theCells[Nr-1].riph;
+   double M    = theCells[Nr-1].miph;
+   double pot = 0.0;
+   if( rank==size-1 ) pot=-grav_G*M/rmax;
+
+   int Ng = theDomain->Ng;
+   int imax = Nr-Ng;
+   if( rank==size-1 ) imax = Nr; 
+   int imin = Ng;
+   if( rank==0 ) imin=0;
+   double Ptot = 0.0;
+
+   for( i=imax-1 ; i>=0 ; --i ){
+      struct cell * c = theCells+i;
+      double dr = c->dr;
+      double g = get_g( c , grav_G );
+      c->pot = pot + .5*g*dr;
+      pot += g*dr;
+      if( i==imin ) Ptot = pot;
+   }
+
+   double Ptot_outer = 0.0;
+   double Precv = 0.0;
+
+   int nrk; 
+   for( nrk=size-1 ; nrk >= 0 ; --nrk ){
+      if( rank==nrk ){
+         Ptot_outer = Precv;
+         Ptot += Ptot_outer;
+         if( nrk > 0 ){
+            MPI_Send( &Ptot , 1 , MPI_DOUBLE , nrk-1 , 666 , MPI_COMM_WORLD );
+         }
+      } 
+      if( rank==nrk-1 ){
+         MPI_Status status;
+         MPI_Recv( &Precv , 1 , MPI_DOUBLE , nrk , 666 , MPI_COMM_WORLD , &status );
+      }  
+   }
+
+   for( i=0 ; i<Nr ; ++i ){
+      theCells[i].pot += Ptot_outer;
+   }
 
 }
 
@@ -83,11 +170,18 @@ void gravity_addsrc( struct domain * theDomain , double dt ){
 
    calculate_mass( theDomain );
 
+   double grav_G = theDomain->theParList.grav_G;
    struct cell * theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
    int i;
    for( i=0 ; i<Nr ; ++i ){
-      grav_src( theCells+i , dt );
+      struct cell * c = theCells+i;
+      double rp,rm;
+      rp = c->riph;
+      rm = 0.0;
+      if( i!=0 ) rm = theCells[i-1].riph;
+      double dV = get_dV( rp , rm );
+      grav_src( c , grav_G , dV*dt );
    }
 
 }

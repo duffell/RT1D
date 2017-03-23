@@ -52,6 +52,7 @@ void set_wcell( struct domain * theDomain ){
          double wR = get_vr( cR->prim );
          w = .5*(wL + wR); 
          if( i==0 && theDomain->rank==0 ) w = 0.5*wR*(cL->riph)/(cR->riph-.5*cR->dr);//*(cR->riph - .5*cR->dr)/(cL->riph);//0.0;//2./3.*wR;
+         //if( i==0 && theDomain->rank==0 ) w = 0.0;
       }
       cL->wiph = w;
    }
@@ -139,6 +140,7 @@ void radial_flux( struct domain * theDomain , double dt ){
 void source( double * , double * , double , double , double );
 void source_nozz( double * , double * , double , double , double , double );
 void source_alpha( double * , double * , double * , double , double );
+void source_grow( double * , double * , double * , double , double );
 void gravity_addsrc( struct domain * , double );
 
 void add_source( struct domain * theDomain , double dt ){
@@ -164,14 +166,23 @@ void add_source( struct domain * theDomain , double dt ){
             struct cell * cm = theCells+i-1;
             double dR = .5*cp->dr + c->dr + .5*cm->dr;
             grad[q] = (cp->prim[q]-cm->prim[q])/dR;
+/*
+            double gR = 2.*(cp->prim[q]-c->prim[q])/(cp->dr+c->dr);
+            double gL = 2.*(c->prim[q]-cm->prim[q])/(c->dr+cm->dr);
+            double g = gL;
+            if( gL*gR < 0. ) g = 0.;
+            if( fabs(gR) < fabs(g) ) g = gR;
+            grad[q] = g;
+*/
          }else{
             grad[q] = 0.0;
          }
       }
       source_alpha( c->prim , c->cons , grad , r , dV*dt );
+      if( 0 ) source_grow( c->prim , c->cons , grad , r , dV*dt );
    }   
 
-   int gravity_flag = 1;
+   int gravity_flag = theDomain->theParList.grav_flag;
    if( gravity_flag ) gravity_addsrc( theDomain , dt );
 
 }

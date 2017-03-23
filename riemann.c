@@ -4,10 +4,12 @@ enum{_HLL_,_HLLC_};
 
 int riemann_solver = 0;
 int rt_flag = 0;
+double gamma_law = 1.0;
 
 void setRiemannParams( struct domain * theDomain ){
    riemann_solver = theDomain->theParList.Riemann_Solver;
    rt_flag = theDomain->theParList.rt_flag;
+   gamma_law = theDomain->theParList.Adiabatic_Index;
 }
 
 void prim2cons( double * , double * , double );
@@ -112,6 +114,16 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
          gprim[q] = (cR->prim[q] - cL->prim[q])/(drL+drR);
          gcons[q] = (consR[q] - consL[q])/(drL+drR);
       }
+//If new model, gcons[q] = P^1/gamma*grad( cons/P^1/gamma ).
+/*
+      double Pgam  = pow( prim[PPP] , 1./gamma_law );
+      double PgamL = pow( cL->prim[PPP] , 1./gamma_law );
+      double PgamR = pow( cR->prim[PPP] , 1./gamma_law );
+      for( q=0 ; q<NUM_Q ; ++q ){
+         gcons[q] = Pgam*( consR[q]/PgamR - consL[q]/PgamL )/(drL+drR); 
+      }
+*/
+////////
       double eta = get_eta( prim , gprim , r );
       for( q=0 ; q<NUM_Q ; ++q ){
          Flux[q] += -eta*gcons[q];

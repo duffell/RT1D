@@ -20,6 +20,8 @@ void setupDomain( struct domain * theDomain ){
    theDomain->N_snp = theDomain->theParList.NumSnaps;
    theDomain->N_chk = theDomain->theParList.NumChecks;
 
+   theDomain->point_mass = theDomain->theParList.grav_pointmass;
+
    theDomain->count_steps = 0;
    theDomain->final_step = 0;
 

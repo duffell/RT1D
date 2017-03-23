@@ -1,5 +1,5 @@
 
-INITIAL  = hse
+INITIAL  = readtable
 HYDRO    = euler
 OUTPUT   = ascii
 

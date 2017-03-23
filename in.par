@@ -1,24 +1,24 @@
 
 
 //Time Range//
-T_Start			0.0
-T_End			10.0 //3888000
+T_Start			0.4
+T_End			8.64e5 //1e5 //8.64e5 //8e4 //864000 //8e4 //8.6e5 //8e4 //1e5
 
 //Output Frequency//
-Num_Reports		10000
+Num_Reports		1e4
 Num_Snapshots		0
-Num_Checkpoints		0
-Use_Logtime		0
+Num_Checkpoints		10
+Use_Logtime		1
 
 //Grid Dimensions//
-Num_R			1024
-R_Min			0.0
-R_Max			1.2
-Log_Zoning		0	//0=Uniform, 1=Log, 2=Hybrid
+Num_R			16000
+R_Min			2e8 //4e8 //3e-3 //1e9  //0.0
+R_Max			2e15 //2e15 //7e10
+Log_Zoning		1	//0=Uniform, 1=Log, 2=Hybrid
 Log_Radius		0.25	//Only for option 2 of Log_Zoning
 
 Max_Aspect_Short        2.0 
-Max_Aspect_Long         20.0     //Aspect Ratio AMR Refinement Criteria
+Max_Aspect_Long         100.0 //20.0     //Aspect Ratio AMR Refinement Criteria
 
 //Numerical Parameters
 CFL			0.2
@@ -26,10 +26,27 @@ PLM			1.0
 Riemann_Solver		1	//0=HLL, 1=HLLC
 Mesh_Motion		1	//0=Fixed, 1=By Cell, 2=Riemann Solver
 Density_Floor		0.0
-Pressure_Floor		1e-8
+Pressure_Floor		1e-5 //1e-20
+Absorb_Inner		0
 
 //Hydro Parameters
-Adiabatic_Index		1.4
+Adiabatic_Index		1.33333333333 //1.666666666667
+
+//Gravity Parameters
+Gravity_Switch		0
+Gravity_G		6.67428e-8
+Gravity_Pointmass	3.02e33
+
+//RT Model Parameters
 Use_RT			0
+Measure_Growth		0
+
+RT_A			1e-3 //1e-6		//1.176e-5
+RT_B			2.5		//1.2
+RT_C			0.2		//0.102
+RT_D			2.0  		//0.0
+
+//Paper 1: A = 1.176e-5, B = 1.2, C = 0.102, D = 0.0
+//Paper 2: A = 1e-3, 	 B = 2.5, C = 0.2,   D = 2.0
 
 

@@ -27,15 +27,28 @@ void boundary( struct domain * theDomain ){
       cB->prim[PPP] = cP->prim[PPP];
    }
 */
-/*
+
    int ABSORB_R0 = theDomain->theParList.Absorb_BC;
-         if( ABSORB_R0 ){
-            struct cell * c3 = &(theCells[jk][1]);
-            struct cell * c4 = &(theCells[jk][0]);
-            for( q=0 ; q<NUM_Q ; ++q ){
-               c4->prim[q] = c3->prim[q];
-            }    
+   if( ABSORB_R0 && rank==0 ){
+      struct cell * c3 = theCells+1;
+      struct cell * c4 = theCells;
+ 
+      //struct cell * cB = theCells+0;
+      //struct cell * cP = theCells+1;
+      //if( cP->prim[VRR] < 0.0 ){
+         //cB->prim[RHO] = cP->prim[RHO];
+         //cB->prim[PPP] = cP->prim[PPP];
+         //cB->prim[VRR] = cP->prim[VRR];
+      //}
+int q;
+      //if( c3->prim[VRR] < 0.0 ){
+         for( q=0 ; q<NUM_Q ; ++q ){
+            c4->prim[q] = c3->prim[q];
          }    
-*/
+      //c4->prim[AAA] = 0.0;
+      //if( c4->prim[VRR] > 0.0 ) c4->prim[VRR] *= .5;
+      //c4->prim[VRR] = 0.0;
+      //}
+   }    
 
 }

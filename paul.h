@@ -8,7 +8,7 @@ enum{DDD,TAU,SRR};
 #include <string.h>
 #include <time.h>
 
-#define NUM_Q 5
+#define NUM_Q 8
 #define NUM_G 2
 
 struct param_list{
@@ -25,9 +25,14 @@ struct param_list{
    double MaxShort, MaxLong;
    int Absorb_BC, Initial_Regrid, rt_flag;
 
+   int grav_flag, grow_flag;
+   double grav_G, grav_pointmass;
+
    double CFL, PLM;
    double Density_Floor, Pressure_Floor;
    double Adiabatic_Index;
+
+   double rt_A,rt_B,rt_C,rt_D;
 
 };
 
@@ -35,6 +40,7 @@ struct domain{
 
    struct cell * theCells;
    int Nr,Ng;
+   double point_mass;
 
    time_t Wallt_init;
    int rank,size;
@@ -65,5 +71,6 @@ struct cell{
    double miph;
    double dm;
    double wiph;
+   double pot;
 };
 

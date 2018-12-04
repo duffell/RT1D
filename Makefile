@@ -1,5 +1,5 @@
 
-INITIAL  = readtable
+INITIAL  = ejecta
 HYDRO    = euler
 OUTPUT   = ascii
 

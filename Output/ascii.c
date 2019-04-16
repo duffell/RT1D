@@ -43,6 +43,7 @@ void output( struct domain * theDomain , char * filestart ){
             for( q=0 ; q<NUM_Q ; ++q ){
                fprintf(pFile,"%e ",c->prim[q]);
             }
+            fprintf(pFile,"%e ",c->miph);
             fprintf(pFile,"\n");
          }
          fclose( pFile );

@@ -11,11 +11,18 @@ double getmindt( struct domain * theDomain ){
 
    struct cell * theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
+   int Ng = theDomain->Ng;
 
    double dt = 1e100;
+   int imin = Ng;
+   int imax = Nr-Ng;
+   if( theDomain->rank == 0) imin = 0;
+   if( theDomain->rank == theDomain->size-1 ) imax = Nr;
+
    int i;
-   for( i=1 ; i<Nr-1 ; ++i ){
+   for( i=imin ; i<imax ; ++i ){
       int im = i-1;
+      if( i==0 ) im = 0;
       struct cell * c = theCells+i;
       double dr = c->dr;
       double r = c->riph-.5*dr;
@@ -40,17 +47,22 @@ void set_wcell( struct domain * theDomain ){
    struct cell * theCells = theDomain->theCells;
    int mesh_motion = theDomain->theParList.Mesh_Motion;
    int Nr = theDomain->Nr;
+   int bufferzone = 1;
+   double Rmax = theCells[Nr-1].riph;
+   MPI_Allreduce( MPI_IN_PLACE , &Rmax , 1 , MPI_DOUBLE , MPI_MAX , MPI_COMM_WORLD );
+   double Rbuf = .9*Rmax;
 
    int i;
-   for( i=0 ; i<Nr-1 ; ++i ){
+   for( i=0 ; i<Nr ; ++i ){
       struct cell * cL = theCells+i;  
       double w = 0.0;
-      if( mesh_motion ){
+      if( mesh_motion && i<Nr-1 ){
          struct cell * cR = theCells+i+1;
          double wL = get_vr( cL->prim );
          double wR = get_vr( cR->prim );
          w = .5*(wL + wR); 
          if( i==0 && theDomain->rank==0 ) w = 0.5*wR*(cL->riph)/(cR->riph-.5*cR->dr);//*(cR->riph - .5*cR->dr)/(cL->riph);//0.0;//2./3.*wR;
+         if( bufferzone && cL->riph > Rbuf ) w *= (Rmax-cL->riph)/(Rmax-Rbuf);//w = 0.0;
          //if( i==0 && theDomain->rank==0 ) w = 0.0;
       }
       cL->wiph = w;
@@ -264,9 +276,6 @@ void AMR( struct domain * theDomain ){
    longandshort( theDomain , &L , &S , &iL , &iS , &rL , &rS );
    int rank = theDomain->rank;
 
-   //if( rank == rL ) printf("Rank %d; Long  = %e #%d\n",rank,L,iL);
-   //if( rank == rS ) printf("Rank %d; Short = %e #%d\n",rank,S,iS);
-
    double MaxShort = theDomain->theParList.MaxShort;
    double MaxLong  = theDomain->theParList.MaxLong;
 
@@ -275,6 +284,7 @@ void AMR( struct domain * theDomain ){
    int Nr = theDomain->Nr;
 
    if( S>MaxShort && rank == rS ){
+      printf("Rank %d; Short = %e #%d of %d\n",rank,S,iS,Nr);
       //printf("KILL! rank = %d\n",rank);
 
       int iSp = iS+1;
@@ -320,6 +330,7 @@ void AMR( struct domain * theDomain ){
 
    if( L>MaxLong && rank==rL ){
 
+      printf("Rank %d; Long  = %e #%d of %d\n",rank,L,iL,Nr);
       //printf("FORGE! rank = %d\n",rank);
       theDomain->Nr += 1;
       Nr = theDomain->Nr;

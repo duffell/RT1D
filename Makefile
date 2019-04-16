@@ -1,5 +1,5 @@
 
-INITIAL  = hse
+INITIAL  = hse2
 HYDRO    = euler
 OUTPUT   = ascii
 

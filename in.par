@@ -2,7 +2,7 @@
 
 //Time Range//
 T_Start			0.0
-T_End			1e4 //8.64e5 //1e5 //8.64e5 //8e4 //864000 //8e4 //8.6e5 //8e4 //1e5
+T_End			1e4 //4.938e3 //8.64e5 //1e5 //8.64e5 //8e4 //864000 //8e4 //8.6e5 //8e4 //1e5
 
 //Output Frequency//
 Num_Reports		1e4
@@ -13,18 +13,18 @@ Use_Logtime		0
 //Grid Dimensions//
 Num_R			512
 R_Min			0.0 //1e-3 //4e8 //3e-3 //1e9  //0.0
-R_Max			1.0 //2e15 //7e10
+R_Max			10.0 //2e15 //7e10
 Log_Zoning		0 //1	//0=Uniform, 1=Log, 2=Hybrid
 Log_Radius		0.25	//Only for option 2 of Log_Zoning
 
 Max_Aspect_Short        2.0 
-Max_Aspect_Long         2.0 //20.0     //Aspect Ratio AMR Refinement Criteria
+Max_Aspect_Long         20.0     //Aspect Ratio AMR Refinement Criteria
 
 //Numerical Parameters
 CFL			0.2
 PLM			1.0
 Riemann_Solver		1	//0=HLL, 1=HLLC
-Mesh_Motion		0	//0=Fixed, 1=By Cell, 2=Riemann Solver
+Mesh_Motion		1	//0=Fixed, 1=By Cell, 2=Riemann Solver
 Density_Floor		0.0
 Pressure_Floor		1e-5 //1e-20
 Absorb_Inner		0

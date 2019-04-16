@@ -55,8 +55,8 @@ void aggregate_mass( struct domain * theDomain ){
 
    double Mtemp = M;
    for( i=imin-1 ; i>=0 ; --i ){
-      Mtemp -= theCells[i+1].dm;
       theCells[i].miph = Mtemp;
+      Mtemp -= theCells[i+1].dm;
    }
 
    for( i=imin ; i<Nr ; ++i ){
@@ -100,11 +100,11 @@ void calculate_mass( struct domain * theDomain ){
    int i;
    for( i=0 ; i<Nr ; ++i ){
       struct cell * c = theCells+i;
-      double rp,rm;
-      rp = c->riph;
-      rm = 0.0;
-      if( i!=0 ) rm = theCells[i-1].riph;
-      double dV = get_dV( rp , rm ); 
+      //double rp,rm;
+      //rp = c->riph;
+      //rm = rp-c->dr;
+      //if( i!=0 ) rm = theCells[i-1].riph;
+      //double dV = get_dV( rp , rm ); 
       c->dm = c->cons[DDD];//c->prim[RHO]*dV;
    }
 
@@ -178,8 +178,7 @@ void gravity_addsrc( struct domain * theDomain , double dt ){
       struct cell * c = theCells+i;
       double rp,rm;
       rp = c->riph;
-      rm = 0.0;
-      if( i!=0 ) rm = theCells[i-1].riph;
+      rm = rp - c->dr;
       double dV = get_dV( rp , rm );
       grav_src( c , dV*dt );
    }

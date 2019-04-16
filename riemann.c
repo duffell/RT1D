@@ -43,7 +43,7 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
    double gR = 0.0;
    if( grav_e_mode == 1 ){
       gL = get_g( cL );
-      gR = get_g( cR );
+      gR = get_g( cR );    
    }
 
    double Fl[NUM_Q];
@@ -122,8 +122,8 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
       double prim[NUM_Q];
       double consL[NUM_Q];
       double consR[NUM_Q];
-      prim2cons( cL->prim , consL , 0.0 , 1.0 );
-      prim2cons( cR->prim , consR , 0.0 , 1.0 );
+      prim2cons( cL->prim , consL , gL , 1.0 );
+      prim2cons( cR->prim , consR , gR , 1.0 );
       double gprim[NUM_Q];
       double gcons[NUM_Q];
       for( q=0 ; q<NUM_Q ; ++q ){

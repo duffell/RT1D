@@ -9,6 +9,7 @@ int num_diagnostics( void );
 void setICparams( struct domain * );
 void setHydroParams( struct domain * );
 void setRiemannParams( struct domain * );
+void setGravityParams( struct domain * );
 
 void setupDomain( struct domain * theDomain ){
 
@@ -32,13 +33,16 @@ void setupDomain( struct domain * theDomain ){
    setICparams( theDomain );
    setHydroParams( theDomain );
    setRiemannParams( theDomain );
+   setGravityParams( theDomain );
  
 }
 
 void initial( double * , double ); 
-void prim2cons( double * , double * , double );
-void cons2prim( double * , double * , double );
+void prim2cons( double * , double * , double , double );
+void cons2prim( double * , double * , double , double );
 void restart( struct domain * ); 
+void calculate_mass( struct domain * );
+double get_g( struct cell * );
 void calc_dp( struct domain * );
 void set_wcell( struct domain * );
 
@@ -56,10 +60,23 @@ void setupCells( struct domain * theDomain ){
       double r = get_moment_arm( rp , rm );
       double dV = get_dV( rp , rm );
       initial( c->prim , r ); 
-      prim2cons( c->prim , c->cons , dV );
-      cons2prim( c->cons , c->prim , dV );
+      prim2cons( c->prim , c->cons , 0.0 , dV );
+      cons2prim( c->cons , c->prim , 0.0 , dV );
    }
 
+   if( theDomain->theParList.grav_e_mode == 1 ){
+      calculate_mass( theDomain );
+
+      for( i=0 ; i<Nr ; ++i ){
+         struct cell * c = &(theCells[i]);
+         double rp = c->riph;
+         double rm = rp - c->dr;
+         double dV = get_dV( rp , rm );
+         double g = get_g( c );
+         prim2cons( c->prim , c->cons , g , dV );
+         cons2prim( c->cons , c->prim , g , dV );
+      }
+   }
 }
 
 void freeDomain( struct domain * theDomain ){

@@ -32,8 +32,7 @@ double getmindt( struct domain * theDomain ){
 }
 
 void initial( double * , double * );
-void prim2cons( double * , double * , double );
-void cons2prim( double * , double * , double );
+void cons2prim( double * , double * , double , double );
 double get_vr( double * );
 
 void set_wcell( struct domain * theDomain ){
@@ -101,10 +100,16 @@ void calc_dr( struct domain * theDomain ){
 
 }
 
+void calculate_mass( struct domain * );
+double get_g( struct cell * );
 
 void calc_prim( struct domain * theDomain ){
 
+
    struct cell * theCells = theDomain->theCells;
+   int gE = theDomain->theParList.grav_e_mode;
+   if( gE == 1 ) calculate_mass( theDomain );
+
    int Nr = theDomain->Nr;
 
    int i;
@@ -113,7 +118,9 @@ void calc_prim( struct domain * theDomain ){
       double rp = c->riph;
       double rm = rp-c->dr;
       double dV = get_dV( rp , rm );
-      cons2prim( c->cons , c->prim , dV );
+      double g = 0.0;
+      if( gE == 1 ) g = get_g( c );
+      cons2prim( c->cons , c->prim , g , dV );
    }
 
 }
@@ -123,6 +130,7 @@ void riemann( struct cell * , struct cell * , double , double );
 
 void radial_flux( struct domain * theDomain , double dt ){
 
+   if( theDomain->theParList.grav_e_mode == 1 ) calculate_mass(theDomain);
    struct cell * theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
    int i;
@@ -287,6 +295,8 @@ void AMR( struct domain * theDomain ){
       //Remove Zone at iS+1
       c->dr   += cp->dr;
       c->riph  = cp->riph;
+      c->dm   += cp->dm;
+      c->miph  = cp->miph;
       int q;
       for( q=0 ; q<NUM_Q ; ++q ){
          c->cons[q]   += cp->cons[q];
@@ -295,7 +305,8 @@ void AMR( struct domain * theDomain ){
       double rp = c->riph;
       double rm = rp - c->dr;
       double dV = get_dV( rp , rm );
-      cons2prim( c->cons , c->prim , dV );
+      double g = get_g( c );
+      cons2prim( c->cons , c->prim , g , dV );
       //Shift Memory
       int blocksize = Nr-iSp-1;
       memmove( theCells+iSp , theCells+iSp+1 , blocksize*sizeof(struct cell) );
@@ -323,10 +334,17 @@ void AMR( struct domain * theDomain ){
       double rp = c->riph;
       double rm = rp - c->dr;
       double r0 = pow( .5*(rp*rp*rp+rm*rm*rm) , 1./3. );
+      double dm = .5*c->dm;
 
       c->riph  = r0;
       c->dr    = r0-rm;
+      cp->riph = rp;
       cp->dr   = rp-r0;
+
+      c->dm    = dm;
+      cp->dm   = dm;
+      cp->miph = c->miph;
+      c->miph -= dm;
 
       int q;
       for( q=0 ; q<NUM_Q ; ++q ){
@@ -337,9 +355,11 @@ void AMR( struct domain * theDomain ){
       }
 
       double dV = get_dV( r0 , rm );
-      cons2prim( c->cons , c->prim , dV );
+      double g = get_g( c );
+      cons2prim( c->cons , c->prim , g , dV );
       dV = get_dV( rp , r0 );
-      cons2prim( cp->cons , cp->prim , dV );
+      g  = get_g( cp );
+      cons2prim( cp->cons , cp->prim , g , dV );
 
    }
 

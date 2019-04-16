@@ -1,5 +1,5 @@
 
-INITIAL  = ejecta
+INITIAL  = hse
 HYDRO    = euler
 OUTPUT   = ascii
 

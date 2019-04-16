@@ -1,15 +1,24 @@
 
 #include "paul.h"
 
+static int grav_E_mode = 0;
+static double grav_G = 0.0;
+
+void setGravityParams( struct domain * theDomain ){
+   grav_E_mode = theDomain->theParList.grav_e_mode;
+   grav_G = theDomain->theParList.grav_G;
+}
+
 double get_dV( double , double );
 
-double get_g( struct cell * c , double G ){
+double get_g( struct cell * c ){
 
+   double G = grav_G;
    double rp = c->riph;
    double rm = c->riph - c->dr;
    double rc = .5*(rp+rm);
 
-   double frac = (rp*rp*rp - rc*rc*rc)/(rp*rp*rp - rm*rm*rm);
+   double frac = 1.0*(rp*rp*rp - rc*rc*rc)/(rp*rp*rp - rm*rm*rm);
 
 //   double G = 1.0; 
    double M = c->miph-frac*c->dm;
@@ -19,28 +28,15 @@ double get_g( struct cell * c , double G ){
 
 }
 
-void grav_src( struct cell * c , double G , double dVdt ){
+void grav_src( struct cell * c , double dVdt ){
 
    double rho = c->prim[RHO];
    double v   = c->prim[VRR];
 
-
-   double rp = c->riph;
-   double rm = c->riph - c->dr;
-   double rc = rp;//.5*(rp+rm);
-
-   double frac = 1.0;//(rp*rp*rp - rc*rc*rc)/(rp*rp*rp - rm*rm*rm);
-
-//   double G = 1.0;
-   double M = c->miph-frac*c->dm;
-   double r = rc;
-   //double f = menc_force( x , r );
-   double f = -G*M/r/r;
-
-   //printf("F=%e\n",m*f*dt);
+   double f = get_g( c );
 
    c->cons[SRR] += rho*f*dVdt;
-   c->cons[TAU] += rho*v*f*dVdt;
+   if( grav_E_mode == 0 ) c->cons[TAU] += rho*v*f*dVdt;
 
 }
 
@@ -56,6 +52,12 @@ void aggregate_mass( struct domain * theDomain ){
    int i;
    int imin=Ng;
    if( rank==0 ) imin = 0;
+
+   double Mtemp = M;
+   for( i=imin-1 ; i>=0 ; --i ){
+      Mtemp -= theCells[i+1].dm;
+      theCells[i].miph = Mtemp;
+   }
 
    for( i=imin ; i<Nr ; ++i ){
       //if( i>=imin ) M += theCells[i].dm;
@@ -118,7 +120,6 @@ void calculate_pot( struct domain * theDomain ){
    int size=theDomain->size;
 
    struct cell * theCells = theDomain->theCells;
-   double grav_G = theDomain->theParList.grav_G;
    int Nr = theDomain->Nr;
    int i;
    double rmax = theCells[Nr-1].riph;
@@ -136,7 +137,7 @@ void calculate_pot( struct domain * theDomain ){
    for( i=imax-1 ; i>=0 ; --i ){
       struct cell * c = theCells+i;
       double dr = c->dr;
-      double g = get_g( c , grav_G );
+      double g = get_g( c );
       c->pot = pot + .5*g*dr;
       pot += g*dr;
       if( i==imin ) Ptot = pot;
@@ -170,7 +171,6 @@ void gravity_addsrc( struct domain * theDomain , double dt ){
 
    calculate_mass( theDomain );
 
-   double grav_G = theDomain->theParList.grav_G;
    struct cell * theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
    int i;
@@ -181,7 +181,7 @@ void gravity_addsrc( struct domain * theDomain , double dt ){
       rm = 0.0;
       if( i!=0 ) rm = theCells[i-1].riph;
       double dV = get_dV( rp , rm );
-      grav_src( c , grav_G , dV*dt );
+      grav_src( c , dV*dt );
    }
 
 }

@@ -4,6 +4,7 @@
 static double GAMMA_LAW = 0.0;
 static double RHO_FLOOR = 0.0;
 static double PRE_FLOOR = 0.0;
+static double grav_G = 0.0;
 static int USE_RT = 1;
 
 void setHydroParams( struct domain * theDomain ){
@@ -11,13 +12,14 @@ void setHydroParams( struct domain * theDomain ){
    RHO_FLOOR = theDomain->theParList.Density_Floor;
    PRE_FLOOR = theDomain->theParList.Pressure_Floor;
    USE_RT = theDomain->theParList.rt_flag;
+   grav_G = theDomain->theParList.grav_G;
 }
 
 double get_vr( double * prim ){
    return( prim[VRR] );
 }
 
-void prim2cons( double * prim , double * cons , double dV ){
+void prim2cons( double * prim , double * cons , double g , double dV ){
    double rho = prim[RHO];
    double Pp  = prim[PPP];
    double vr  = prim[VRR];
@@ -25,9 +27,11 @@ void prim2cons( double * prim , double * cons , double dV ){
    double gam = GAMMA_LAW;
    double rhoe = Pp/(gam-1.);
 
+   double egrav = -g*g/8./M_PI/grav_G;
+
    cons[DDD] = rho*dV;
    cons[SRR] = rho*vr*dV;
-   cons[TAU] = (.5*rho*v2 + rhoe)*dV;
+   cons[TAU] = (.5*rho*v2 + rhoe + egrav)*dV;
 
    int q;
    for( q=XXX ; q<NUM_Q ; ++q ){
@@ -35,15 +39,17 @@ void prim2cons( double * prim , double * cons , double dV ){
    }
 }
 
-void cons2prim( double * cons , double * prim , double dV ){
+void cons2prim( double * cons , double * prim , double g , double dV ){
 
    double rho = cons[DDD]/dV;
    double Sr  = cons[SRR]/dV;
    double E   = cons[TAU]/dV;
 
+   double egrav = -g*g/8./M_PI/grav_G;
+
    double vr = Sr/rho;
    double v2 = vr*vr;
-   double rhoe = E - .5*rho*v2;
+   double rhoe = E - .5*rho*v2 - egrav;
    double gam = GAMMA_LAW;
    double Pp = (gam-1.)*rhoe;
 
@@ -61,7 +67,7 @@ void cons2prim( double * cons , double * prim , double dV ){
 
 }
 
-void getUstar( double * prim , double * Ustar , double Sk , double Ss ){
+void getUstar( double * prim , double * Ustar , double Sk , double Ss , double g ){
 
    double rho = prim[RHO];
    double vr  = prim[VRR];
@@ -71,6 +77,7 @@ void getUstar( double * prim , double * Ustar , double Sk , double Ss ){
    double gam = GAMMA_LAW;
 
    double rhoe = Pp/(gam-1.);
+   double egrav = -g*g/8./M_PI/grav_G;
 
    double rhostar = rho*(Sk - vr)/(Sk - Ss);
    double Pstar = Pp*(Ss - vr)/(Sk - Ss);
@@ -78,7 +85,7 @@ void getUstar( double * prim , double * Ustar , double Sk , double Ss ){
 
    Ustar[DDD] = rhostar;
    Ustar[SRR] = rhostar*( Ss );
-   Ustar[TAU] = .5*rhostar*v2 + Us + rhostar*Ss*(Ss - vr) + Pstar;
+   Ustar[TAU] = .5*rhostar*v2 + Us + rhostar*Ss*(Ss - vr) + Pstar + egrav;
 
    int q;
    for( q=XXX ; q<NUM_Q ; ++q ){

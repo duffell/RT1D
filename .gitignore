@@ -1,0 +1,11 @@
+# Application
+rt1d
+
+# Output Files
+*.dat
+*.log
+
+# Build/editor files
+*.o
+*.swp
+.DS_Store

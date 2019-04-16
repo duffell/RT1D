@@ -65,7 +65,7 @@ void report( struct domain * theDomain ){
       double gP   = theCells[i].grad[PPP];
 
       w_avg   += w*dr;
-      rho_avg += rho*w*dr;
+      rho_avg += rho*theCells[i].cons[DDD];
       P_avg   += P*w*dr;
       r_avg   += r*w*dr;
       r2_avg  += r*r*w*dr;
@@ -97,7 +97,7 @@ void report( struct domain * theDomain ){
    MPI_Allreduce( MPI_IN_PLACE , &grho_avg , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
    MPI_Allreduce( MPI_IN_PLACE , &gP_avg , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
 
-   rho_avg /= w_avg;
+   rho_avg /= Mass;
    P_avg /= w_avg;
    r_avg /= w_avg;
    r2_avg /= w_avg;

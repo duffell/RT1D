@@ -3,6 +3,9 @@
 
 double get_moment_arm( double , double );
 void initial( double * , double ); 
+double get_g( struct cell * );
+double get_dV( double , double );
+void prim2cons( double * , double * , double , double );
 
 void boundary( struct domain * theDomain ){
 
@@ -17,7 +20,10 @@ void boundary( struct domain * theDomain ){
       double rp = cB->riph;
       double rm = rp-cB->dr;
       double r = get_moment_arm(rp,rm);
-      initial( cB->prim , r ); 
+      initial( cB->prim , r );
+      double dV = get_dV( rp , rm );
+      double g = get_g( cB );
+      prim2cons( cB->prim , cB->cons , g , dV ); 
    }
 /*
    if( rank == 0 ){

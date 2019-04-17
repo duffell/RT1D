@@ -50,7 +50,7 @@ void set_wcell( struct domain * theDomain ){
    int bufferzone = 1;
    double Rmax = theCells[Nr-1].riph;
    MPI_Allreduce( MPI_IN_PLACE , &Rmax , 1 , MPI_DOUBLE , MPI_MAX , MPI_COMM_WORLD );
-   double Rbuf = .9*Rmax;
+   double Rbuf = 0.8*Rmax;
 
    int i;
    for( i=0 ; i<Nr ; ++i ){
@@ -230,8 +230,8 @@ void longandshort( struct domain * theDomain , double * L , double * S , int * i
    int size = theDomain->size;
    int Ng   = theDomain->Ng;
 
-   int imin = 1;
-   int imax = Nr-1;
+   int imin = 0;
+   int imax = Nr;
    if( rank!=0 )      imin = Ng;
    if( rank!=size-1 ) imax = Nr-Ng;
 
@@ -289,12 +289,14 @@ void AMR( struct domain * theDomain ){
 
       int iSp = iS+1;
       int iSm = iS-1;
+      if( iS == Nr-1 ) iSp=iS;
+      if( iS == 0 ) iSm=0;
       //Possibly shift iS backwards by 1 
       double drL = theCells[iSm].dr;
       double drR = theCells[iSp].dr;
       int imin = Ng;
       if( rank==0 ) imin = 0;
-      if( drL<drR && iSm>imin ){
+      if( (drL<drR && iSm>imin) || iS==Nr-1 ){
          --iS;
          --iSm;
          --iSp;
@@ -349,12 +351,12 @@ void AMR( struct domain * theDomain ){
 
       c->riph  = r0;
       c->dr    = r0-rm;
-      cp->riph = rp;
+//      cp->riph = rp;
       cp->dr   = rp-r0;
 
       c->dm    = dm;
       cp->dm   = dm;
-      cp->miph = c->miph;
+//      cp->miph = c->miph;
       c->miph -= dm;
 
       int q;

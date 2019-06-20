@@ -6,6 +6,10 @@ static double RHO_FLOOR = 0.0;
 static double PRE_FLOOR = 0.0;
 static double grav_G = 0.0;
 static int USE_RT = 1;
+static double rt_A = 0.0;
+static double rt_B = 0.0;
+static double rt_C = 0.0;
+static double rt_D = 0.0;
 
 void setHydroParams( struct domain * theDomain ){
    GAMMA_LAW = theDomain->theParList.Adiabatic_Index;
@@ -13,13 +17,17 @@ void setHydroParams( struct domain * theDomain ){
    PRE_FLOOR = theDomain->theParList.Pressure_Floor;
    USE_RT = theDomain->theParList.rt_flag;
    grav_G = theDomain->theParList.grav_G;
+   rt_A = theDomain->theParList.rt_A;
+   rt_B = theDomain->theParList.rt_B;
+   rt_C = theDomain->theParList.rt_C;
+   rt_D = theDomain->theParList.rt_D;
 }
 
 double get_vr( double * prim ){
    return( prim[VRR] );
 }
 
-void prim2cons( double * prim , double * cons , double g , double dV ){
+void prim2cons( double * prim , double * cons , double g , double phi , double dV ){
    double rho = prim[RHO];
    double Pp  = prim[PPP];
    double vr  = prim[VRR];
@@ -27,7 +35,7 @@ void prim2cons( double * prim , double * cons , double g , double dV ){
    double gam = GAMMA_LAW;
    double rhoe = Pp/(gam-1.);
 
-   double egrav = -g*g/8./M_PI/grav_G;
+   double egrav = -g*g/8./M_PI/grav_G + .5*rho*phi;
 
    cons[DDD] = rho*dV;
    cons[SRR] = rho*vr*dV;
@@ -39,13 +47,13 @@ void prim2cons( double * prim , double * cons , double g , double dV ){
    }
 }
 
-void cons2prim( double * cons , double * prim , double g , double dV ){
+void cons2prim( double * cons , double * prim , double g , double phi , double dV ){
 
    double rho = cons[DDD]/dV;
    double Sr  = cons[SRR]/dV;
    double E   = cons[TAU]/dV;
 
-   double egrav = -g*g/8./M_PI/grav_G;
+   double egrav = -g*g/8./M_PI/grav_G + .5*rho*phi;
 
    double vr = Sr/rho;
    double v2 = vr*vr;
@@ -67,7 +75,7 @@ void cons2prim( double * cons , double * prim , double g , double dV ){
 
 }
 
-void getUstar( double * prim , double * Ustar , double Sk , double Ss , double g ){
+void getUstar( double * prim , double * Ustar , double Sk , double Ss , double g , double phi ){
 
    double rho = prim[RHO];
    double vr  = prim[VRR];
@@ -77,7 +85,7 @@ void getUstar( double * prim , double * Ustar , double Sk , double Ss , double g
    double gam = GAMMA_LAW;
 
    double rhoe = Pp/(gam-1.);
-   double egrav = -g*g/8./M_PI/grav_G;
+   double egrav = -g*g/8./M_PI/grav_G + .5*rho*phi;
 
    double rhostar = rho*(Sk - vr)/(Sk - Ss);
    double Pstar = Pp*(Ss - vr)/(Sk - Ss);
@@ -105,12 +113,13 @@ void flux( double * prim , double * flux ){
  
    flux[DDD] = rho*vr;
    flux[SRR] = rho*vr*vr + Pp;
-   flux[TAU] = (.5*rho*v2 + rhoe + Pp)*vr;
+   flux[TAU] = (.5*rho*v2 + rhoe + Pp )*vr;
 
    int q;
    for( q=XXX ; q<NUM_Q ; ++q ){
       flux[q] = flux[DDD]*prim[q];
    }
+
 }
 
 void source( double * prim , double * cons , double rp , double rm , double dVdt ){
@@ -122,9 +131,9 @@ void source( double * prim , double * cons , double rp , double rm , double dVdt
 
 void source_alpha( double * prim , double * cons , double * grad_prim , double r , double dVdt ){
 
-   double A = 2e-5/1.7; //2e-5;//1e-4;
-   double B = 1.2;//0.9;
-   double D = 0.0;
+   double A = rt_A;//2e-5/1.7; //2e-5;//1e-4;
+   double B = rt_B;//1.2;//0.9;
+   double D = rt_D;//0.0;
 
    double gam = GAMMA_LAW;
    double alpha = prim[AAA];
@@ -145,7 +154,7 @@ void source_alpha( double * prim , double * cons , double * grad_prim , double r
 
 double get_eta( double * prim , double * grad_prim , double r ){
 
-   double C = 0.06*1.7;//0.03;
+   double C = rt_C;//0.06*1.7;//0.03;
    double gam = GAMMA_LAW;
 
    double cs = sqrt( gam*fabs(prim[PPP]/prim[RHO]) );
@@ -188,12 +197,14 @@ void vel( double * prim1 , double * prim2 , double * Sl , double * Sr , double *
    
 }
 
-double mindt( double * prim , double w , double r , double dr ){
+double mindt( double * prim , double w , double r , double g , double dr ){
 
    double rho = prim[RHO];
    double Pp  = prim[PPP];
    double vr  = prim[VRR];
    double gam = GAMMA_LAW;
+
+//   Pp += g*g/8./M_PI/grav_G;
 
    double cs = sqrt(fabs(gam*Pp/rho));
    double eta = get_eta( prim , NULL , r );

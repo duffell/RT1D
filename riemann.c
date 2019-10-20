@@ -14,9 +14,9 @@ void setRiemannParams( struct domain * theDomain ){
    grav_e_mode = theDomain->theParList.grav_e_mode;
 }
 
-void prim2cons( double * , double * , double , double );
+void prim2cons( double * , double * , double , double , double );
 void flux( double * , double * );
-void getUstar( double * , double * , double , double , double );
+void getUstar( double * , double * , double , double , double , double );
 void vel( double * , double * , double * , double * , double * , double );
 double get_eta( double * , double * , double );
 double get_g( struct cell * );
@@ -42,8 +42,18 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
    double gL = 0.0;
    double gR = 0.0;
    if( grav_e_mode == 1 ){
-      gL = get_g( cL );
-      gR = get_g( cR );    
+//      gL = get_g( cL );
+//      gR = get_g( cR );    
+   }
+   double potL = 0.0;
+   double potR = 0.0;
+   double potC = 0.0;
+   double fgrav = 0.0;
+   if( grav_e_mode == 2 ){
+      potL = cL->pot;
+      potR = cR->pot;
+      potC = .5*(potL+potR);
+      fgrav = cL->fgrav;
    }
 
    double Fl[NUM_Q];
@@ -57,14 +67,14 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
 
    if( w < Sl ){
       flux( primL , Fl );
-      prim2cons( primL , Ul , gL , 1.0 );
+      prim2cons( primL , Ul , gL , potL , 1.0 );
 
       for( q=0 ; q<NUM_Q ; ++q ){
          Flux[q] = Fl[q] - w*Ul[q];
       }
    }else if( w > Sr ){
       flux( primR , Fr );
-      prim2cons( primR , Ur , gR , 1.0 );
+      prim2cons( primR , Ur , gR , potR , 1.0 );
 
       for( q=0 ; q<NUM_Q ; ++q ){
          Flux[q] = Fr[q] - w*Ur[q];
@@ -76,8 +86,8 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
          double aL =  Sr;
          double aR = -Sl;
  
-         prim2cons( primL , Ul , gL , 1.0 );
-         prim2cons( primR , Ur , gR , 1.0 );
+         prim2cons( primL , Ul , gL , potL , 1.0 );
+         prim2cons( primR , Ur , gR , potR , 1.0 );
          flux( primL , Fl );
          flux( primR , Fr );
 
@@ -92,16 +102,16 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
          double Uk[NUM_Q];
          double Fk[NUM_Q];
          if( w < Ss ){
-            prim2cons( primL , Uk , gL , 1.0 );
-            getUstar( primL , Ustar , Sl , Ss , gL ); 
+            prim2cons( primL , Uk , gL , potL , 1.0 );
+            getUstar( primL , Ustar , Sl , Ss , gL , potL ); 
             flux( primL , Fk ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){
                Flux[q] = Fk[q] + Sl*( Ustar[q] - Uk[q] ) - w*Ustar[q];
             }    
          }else{
-            prim2cons( primR , Uk , gR , 1.0 );
-            getUstar( primR , Ustar , Sr , Ss , gR ); 
+            prim2cons( primR , Uk , gR , potR , 1.0 );
+            getUstar( primR , Ustar , Sr , Ss , gR , potR ); 
             flux( primR , Fk ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){
@@ -109,21 +119,23 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
             } 
          } 
       }
-   }
-/*
+   } 
+ 
+   if( grav_e_mode == 2 ) Flux[TAU] += fgrav + .5*potC*Flux[RHO];
+
    if( grav_e_mode == 1 ){
       double G = 1.0;
       double m = cL->miph;
       double egrav = -G*m*m/(8.*M_PI*pow(r,4.));
       Flux[TAU] -= w*egrav;
    }
-*/
+
    if( rt_flag ){
       double prim[NUM_Q];
       double consL[NUM_Q];
       double consR[NUM_Q];
-      prim2cons( cL->prim , consL , gL , 1.0 );
-      prim2cons( cR->prim , consR , gR , 1.0 );
+      prim2cons( cL->prim , consL , gL , potL , 1.0 );
+      prim2cons( cR->prim , consR , gR , potR , 1.0 );
       double gprim[NUM_Q];
       double gcons[NUM_Q];
       for( q=0 ; q<NUM_Q ; ++q ){

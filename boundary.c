@@ -5,7 +5,7 @@ double get_moment_arm( double , double );
 void initial( double * , double ); 
 double get_g( struct cell * );
 double get_dV( double , double );
-void prim2cons( double * , double * , double , double );
+void prim2cons( double * , double * , double , double , double );
 
 void boundary( struct domain * theDomain ){
 
@@ -13,7 +13,7 @@ void boundary( struct domain * theDomain ){
    int Nr = theDomain->Nr;
    int rank = theDomain->rank;
    int size = theDomain->size;
-
+   int gE = theDomain->theParList.grav_e_mode;
    
    if( rank == size-1 ){
       struct cell * cB = theCells+Nr-1;
@@ -22,8 +22,11 @@ void boundary( struct domain * theDomain ){
       double r = get_moment_arm(rp,rm);
       initial( cB->prim , r );
       double dV = get_dV( rp , rm );
-      double g = get_g( cB );
-      prim2cons( cB->prim , cB->cons , g , dV ); 
+      double g = 0.0;
+      if( gE == 1 ) g = get_g( cB );
+      double pot = 0.0;
+      if( gE == 2 ) pot = cB->pot;
+      prim2cons( cB->prim , cB->cons , g , pot , dV ); 
    }
 /*
    if( rank == 0 ){

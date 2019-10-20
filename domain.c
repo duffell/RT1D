@@ -38,10 +38,11 @@ void setupDomain( struct domain * theDomain ){
 }
 
 void initial( double * , double ); 
-void prim2cons( double * , double * , double , double );
-void cons2prim( double * , double * , double , double );
+void prim2cons( double * , double * , double , double , double );
+void cons2prim( double * , double * , double , double , double );
 void restart( struct domain * ); 
 void calculate_mass( struct domain * );
+void calculate_pot( struct domain * );
 double get_g( struct cell * );
 void calc_dp( struct domain * );
 void set_wcell( struct domain * );
@@ -60,21 +61,26 @@ void setupCells( struct domain * theDomain ){
       double r = get_moment_arm( rp , rm );
       double dV = get_dV( rp , rm );
       initial( c->prim , r ); 
-      prim2cons( c->prim , c->cons , 0.0 , dV );
-      cons2prim( c->cons , c->prim , 0.0 , dV );
+      prim2cons( c->prim , c->cons , 0.0 , 0.0 , dV );
+      cons2prim( c->cons , c->prim , 0.0 , 0.0 , dV );
    }
 
-   if( theDomain->theParList.grav_e_mode == 1 ){
+   int gE = theDomain->theParList.grav_e_mode;
+   if( gE ){
       calculate_mass( theDomain );
+      if( gE == 2 ) calculate_pot( theDomain );
 
       for( i=0 ; i<Nr ; ++i ){
          struct cell * c = &(theCells[i]);
          double rp = c->riph;
          double rm = rp - c->dr;
          double dV = get_dV( rp , rm );
-         double g = get_g( c );
-         prim2cons( c->prim , c->cons , g , dV );
-         cons2prim( c->cons , c->prim , g , dV );
+         double g = 0.0;
+         if( gE == 1 ) g = get_g( c );
+         double pot = 0.0;
+         if( gE == 2 ) pot = c->pot;
+         prim2cons( c->prim , c->cons , g , pot , dV );
+         cons2prim( c->cons , c->prim , g , pot , dV );
       }
    }
 }
@@ -114,7 +120,6 @@ void possiblyOutput( struct domain * theDomain , int override ){
    double t_min = theDomain->t_init;
    double t_fin = theDomain->t_fin;
    double Nrpt = theDomain->N_rpt;
-   double Nsnp = theDomain->N_snp;
    double Nchk = theDomain->N_chk;
    int LogOut = theDomain->theParList.Out_LogTime;
    int n0;
@@ -141,17 +146,7 @@ void possiblyOutput( struct domain * theDomain , int override ){
          output( theDomain , "output" );
       }
    }
-/*
-   n0 = (int)( t*Nsnp/t_fin );
-   if( LogOut ) n0 = (int)( Nsnp*log(t/t_min)/log(t_fin/t_min) );
-   if( (theDomain->nsnp < n0 && Nsnp>0) || override ){
-      theDomain->nsnp = n0;
-      char filename[256];
-      if(!override) sprintf( filename , "snapshot_%04d" , n0 );
-      else sprintf( filename , "snapshot" );
-      //snapshot( theDomain , filename );
-   }
-*/
+
 }
 
 

@@ -3,15 +3,18 @@
 
 double get_dA( double );
 double get_dV( double , double );
+double get_g( struct cell * );
 double get_moment_arm( double , double );
 
-double mindt( double * , double , double , double );
+double mindt( double * , double , double , double , double );
 
 double getmindt( struct domain * theDomain ){
 
    struct cell * theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
    int Ng = theDomain->Ng;
+   int gE = theDomain->theParList.grav_e_mode;
+   int gFl = theDomain->theParList.grav_flag;
 
    double dt = 1e100;
    int imin = Ng;
@@ -29,7 +32,9 @@ double getmindt( struct domain * theDomain ){
       double wm = theCells[im].wiph;
       double wp = c->wiph;
       double w = .5*(wm+wp);
-      double dt_temp = mindt( c->prim , w , r , dr );
+      double g = 0.0;
+      if( gFl && gE == 1 ) g = get_g( c );
+      double dt_temp = mindt( c->prim , w , r , g , dr );
       if( dt > dt_temp ) dt = dt_temp;
    }
    dt *= theDomain->theParList.CFL; 
@@ -39,7 +44,7 @@ double getmindt( struct domain * theDomain ){
 }
 
 void initial( double * , double * );
-void cons2prim( double * , double * , double , double );
+void cons2prim( double * , double * , double , double , double );
 double get_vr( double * );
 
 void set_wcell( struct domain * theDomain ){
@@ -113,7 +118,7 @@ void calc_dr( struct domain * theDomain ){
 }
 
 void calculate_mass( struct domain * );
-double get_g( struct cell * );
+void calculate_pot( struct domain * );
 
 void calc_prim( struct domain * theDomain ){
 
@@ -121,6 +126,7 @@ void calc_prim( struct domain * theDomain ){
    struct cell * theCells = theDomain->theCells;
    int gE = theDomain->theParList.grav_e_mode;
    if( gE == 1 ) calculate_mass( theDomain );
+   if( gE == 2 ) calculate_pot( theDomain );
 
    int Nr = theDomain->Nr;
 
@@ -132,17 +138,25 @@ void calc_prim( struct domain * theDomain ){
       double dV = get_dV( rp , rm );
       double g = 0.0;
       if( gE == 1 ) g = get_g( c );
-      cons2prim( c->cons , c->prim , g , dV );
+      double pot = 0.0;
+      if( gE == 2 ) pot = c->pot;
+      cons2prim( c->cons , c->prim , g , pot , dV );
    }
 
 }
 
 void plm( struct domain *);
 void riemann( struct cell * , struct cell * , double , double );
+void calculate_fgrav( struct domain * );
 
 void radial_flux( struct domain * theDomain , double dt ){
 
-   if( theDomain->theParList.grav_e_mode == 1 ) calculate_mass(theDomain);
+   int gE = theDomain->theParList.grav_e_mode;
+   if( gE ) calculate_mass(theDomain);
+   if( gE == 2 ){
+      calculate_pot( theDomain );
+      calculate_fgrav( theDomain );
+   }
    struct cell * theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
    int i;
@@ -214,6 +228,7 @@ void longandshort( struct domain * theDomain , double * L , double * S , int * i
    int Nr = theDomain->Nr;
    double rmax = theCells[Nr-1].riph;
    double rmin = theCells[0].riph;
+   double R0 = theDomain->theParList.LogRadius;
    MPI_Allreduce( MPI_IN_PLACE , &rmax , 1 , MPI_DOUBLE , MPI_MAX , MPI_COMM_WORLD );
    MPI_Allreduce( MPI_IN_PLACE , &rmin , 1 , MPI_DOUBLE , MPI_MIN , MPI_COMM_WORLD );
    int Nr0 = theDomain->theParList.Num_R;
@@ -231,6 +246,7 @@ void longandshort( struct domain * theDomain , double * L , double * S , int * i
    int Ng   = theDomain->Ng;
 
    int imin = 0;
+   if( logscale==1 ) imin=1;
    int imax = Nr;
    if( rank!=0 )      imin = Ng;
    if( rank!=size-1 ) imax = Nr-Ng;
@@ -241,6 +257,7 @@ void longandshort( struct domain * theDomain , double * L , double * S , int * i
       double dy = c->dr;
       double dx = dr0;
       if( logscale ) dx = c->riph*dx0;
+      if( logscale==2 ) dx = (1./(double)Nr0)*( c->riph-rmin + rmax/(rmax/R0-1.) )*log(rmax/R0);
       double l = dy/dx;
       double s = dx/dy;
       if( Long  < l ){ Long  = l; iLong  = i; } 
@@ -283,6 +300,8 @@ void AMR( struct domain * theDomain ){
    int Ng = theDomain->Ng;
    int Nr = theDomain->Nr;
 
+   int gE = theDomain->theParList.grav_e_mode;
+
    if( S>MaxShort && rank == rS ){
       printf("Rank %d; Short = %e #%d of %d\n",rank,S,iS,Nr);
       //printf("KILL! rank = %d\n",rank);
@@ -317,8 +336,11 @@ void AMR( struct domain * theDomain ){
       double rp = c->riph;
       double rm = rp - c->dr;
       double dV = get_dV( rp , rm );
-      double g = get_g( c );
-      cons2prim( c->cons , c->prim , g , dV );
+      double g = 0.0;
+      if( gE == 1 ) g = get_g( c );
+      double pot = 0.0;
+      if( gE == 2 ) pot = c->pot;
+      cons2prim( c->cons , c->prim , g , pot , dV );
       //Shift Memory
       int blocksize = Nr-iSp-1;
       memmove( theCells+iSp , theCells+iSp+1 , blocksize*sizeof(struct cell) );
@@ -368,11 +390,15 @@ void AMR( struct domain * theDomain ){
       }
 
       double dV = get_dV( r0 , rm );
-      double g = get_g( c );
-      cons2prim( c->cons , c->prim , g , dV );
+      double g = 0.0;
+      double pot = 0.0;
+      if( gE == 1 ) g = get_g( c );
+      if( gE == 2 ) pot = c->pot;
+      cons2prim( c->cons , c->prim , g , pot , dV );
       dV = get_dV( rp , r0 );
-      g  = get_g( cp );
-      cons2prim( cp->cons , cp->prim , g , dV );
+      if( gE == 1 ) g = get_g( cp );
+      if( gE == 2 ) pot = cp->pot;
+      cons2prim( cp->cons , cp->prim , g , pot , dV );
 
    }
 

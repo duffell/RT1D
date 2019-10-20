@@ -1,11 +1,8 @@
 
 #include "paul.h"
 
-void calculate_pot( struct domain * );
 
 void report( struct domain * theDomain ){
-
-   calculate_pot( theDomain );
 
    int Nr = theDomain->Nr;
    int Ng = theDomain->Ng;

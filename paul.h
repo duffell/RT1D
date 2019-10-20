@@ -73,5 +73,6 @@ struct cell{
    double dm;
    double wiph;
    double pot;
+   double fgrav;
 };
 

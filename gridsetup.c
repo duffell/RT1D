@@ -48,8 +48,10 @@ void setupGrid( struct domain * theDomain ){
          rp = Rmin*pow(Rmax/Rmin,xp);
          rm = Rmin*pow(Rmax/Rmin,xm);
       }else{
-         rp = R0*pow(Rmax/R0,xp) + Rmin-R0 + (R0-Rmin)*xp;
-         rm = R0*pow(Rmax/R0,xm) + Rmin-R0 + (R0-Rmin)*xm;
+//         rp = R0*pow(Rmax/R0,xp) + Rmin-R0 + (R0-Rmin)*xp;
+//         rm = R0*pow(Rmax/R0,xm) + Rmin-R0 + (R0-Rmin)*xm;
+         rp = Rmax*(pow(Rmax/R0,xp)-1.)/(Rmax/R0-1.) + Rmin;
+         rm = Rmax*(pow(Rmax/R0,xm)-1.)/(Rmax/R0-1.) + Rmin;
       }
       theDomain->theCells[i].riph = rp;
       theDomain->theCells[i].dr   = rp - rm;

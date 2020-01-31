@@ -137,13 +137,13 @@ void calc_prim( struct domain * theDomain ){
       double rp = c->riph;
       double rm = rp-c->dr;
       double dV = get_dV( rp , rm );
-      double g = 0.0;
-      if( gE == 1 ) g = get_g( c );
-      double pot = 0.0;
-      if( gE == 2 ) pot = c->pot;
+//      double g = 0.0;
+//      if( gE == 1 ) g = get_g( c );
+//      double pot = 0.0;
+//      if( gE == 2 ) pot = c->pot;
       double GMr = 0.0;
       if( gE == 3 ) GMr = get_GMr( c );
-      cons2prim( c->cons , c->prim , g , pot , GMr , dV );
+      cons2prim( c->cons , c->prim , 0.0 , 0.0 , GMr , dV );
    }
 
 }
@@ -339,13 +339,13 @@ void AMR( struct domain * theDomain ){
       double rp = c->riph;
       double rm = rp - c->dr;
       double dV = get_dV( rp , rm );
-      double g = 0.0;
-      if( gE == 1 ) g = get_g( c );
-      double pot = 0.0;
-      if( gE == 2 ) pot = c->pot;
+//      double g = 0.0;
+//      if( gE == 1 ) g = get_g( c );
+//      double pot = 0.0;
+//      if( gE == 2 ) pot = c->pot;
       double GMr = 0.0;
       if( gE == 3 ) GMr = get_GMr( c );
-      cons2prim( c->cons , c->prim , g , pot , GMr , dV );
+      cons2prim( c->cons , c->prim , 0.0 , 0.0 , GMr , dV );
       //Shift Memory
       int blocksize = Nr-iSp-1;
       memmove( theCells+iSp , theCells+iSp+1 , blocksize*sizeof(struct cell) );
@@ -395,18 +395,18 @@ void AMR( struct domain * theDomain ){
       }
 
       double dV = get_dV( r0 , rm );
-      double g = 0.0;
-      double pot = 0.0;
+//      double g = 0.0;
+//      double pot = 0.0;
       double GMr = 0.0;
-      if( gE == 1 ) g = get_g( c );
-      if( gE == 2 ) pot = c->pot;
+//      if( gE == 1 ) g = get_g( c );
+//      if( gE == 2 ) pot = c->pot;
       if( gE == 3 ) GMr = get_GMr( c );
-      cons2prim( c->cons , c->prim , g , pot , GMr , dV );
+      cons2prim( c->cons , c->prim , 0.0 , 0.0 , GMr , dV );
       dV = get_dV( rp , r0 );
-      if( gE == 1 ) g = get_g( cp );
-      if( gE == 2 ) pot = cp->pot;
+//      if( gE == 1 ) g = get_g( cp );
+//      if( gE == 2 ) pot = cp->pot;
       if( gE == 3 ) GMr = get_GMr( cp );
-      cons2prim( cp->cons , cp->prim , g , pot , GMr , dV );
+      cons2prim( cp->cons , cp->prim , 0.0 , 0.0 , GMr , dV );
 
    }
 

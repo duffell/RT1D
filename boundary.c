@@ -23,13 +23,11 @@ void boundary( struct domain * theDomain ){
       double r = get_moment_arm(rp,rm);
       initial( cB->prim , r );
       double dV = get_dV( rp , rm );
-      double g = 0.0;
-      if( gE == 1 ) g = get_g( cB );
-      double pot = 0.0;
-      if( gE == 2 ) pot = cB->pot;
+
       double GMr = 0.0;
       if( gE == 3 ) GMr = get_GMr( cB );
-      prim2cons( cB->prim , cB->cons , g , pot , GMr , dV ); 
+      prim2cons( cB->prim , cB->cons , 0.0 , 0.0 , GMr , dV ); 
+
    }
 /*
    if( rank == 0 ){

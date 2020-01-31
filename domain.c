@@ -76,14 +76,11 @@ void setupCells( struct domain * theDomain ){
          double rp = c->riph;
          double rm = rp - c->dr;
          double dV = get_dV( rp , rm );
-         double g = 0.0;
-         if( gE == 1 ) g = get_g( c );
-         double pot = 0.0;
-         if( gE == 2 ) pot = c->pot;
+
          double GMr = 0.0;
          if( gE == 3 ) GMr = get_GMr( c );
-         prim2cons( c->prim , c->cons , g , pot , GMr , dV );
-         cons2prim( c->cons , c->prim , g , pot , GMr , dV );
+         prim2cons( c->prim , c->cons , 0.0 , 0.0 , GMr , dV );
+         cons2prim( c->cons , c->prim , 0.0 , 0.0 , GMr , dV );
       }
    }
 }

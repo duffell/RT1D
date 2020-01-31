@@ -7,6 +7,7 @@ static int rt_flag = 0;
 static double gamma_law = 1.0;
 static int grav_e_mode = 0;
 static int Bal = 0;
+static double grav_G = 1.0;
 
 void setRiemannParams( struct domain * theDomain ){
    riemann_solver = theDomain->theParList.Riemann_Solver;
@@ -14,11 +15,12 @@ void setRiemannParams( struct domain * theDomain ){
    gamma_law = theDomain->theParList.Adiabatic_Index;
    grav_e_mode = theDomain->theParList.grav_e_mode;
    Bal = theDomain->theParList.grav_bal;
+   grav_G = theDomain->theParList.grav_G;
 }
 
 void prim2cons( double * , double * , double , double , double , double );
 void flux( double * , double * );
-void getUstar( double * , double * , double , double , double , double , double );
+void getUstar( double * , double * , double , double );
 void vel( double * , double * , double * , double * , double * , double );
 double get_eta( double * , double * , double );
 
@@ -52,28 +54,6 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
 
    vel( primL , primR , &Sl , &Sr , &Ss , r );
 
-   double gL = 0.0;
-   double gR = 0.0;
-   if( grav_e_mode == 1 ){
-//      gL = get_g( cL );
-//      gR = get_g( cR );    
-   }
-   double potL = 0.0;
-   double potR = 0.0;
-   double potC = 0.0;
-   double fgrav = 0.0;
-   if( grav_e_mode == 2 ){
-      potL = cL->pot;
-      potR = cR->pot;
-      potC = .5*(potL+potR);
-      fgrav = cL->fgrav;
-   }
-   double GMrL = 0.0;
-   double GMrR = 0.0;
-   if( grav_e_mode == 3 ){
-//      GMrL = get_GMr( cL );
-//      GMrR = get_GMr( cR );
-   }
 
    double Fl[NUM_Q];
    double Fr[NUM_Q];
@@ -86,14 +66,14 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
 
    if( w < Sl ){
       flux( primL , Fl );
-      prim2cons( primL , Ul , gL , potL , GMrL , 1.0 );
+      prim2cons( primL , Ul , 0.0 , 0.0 , 0.0 , 1.0 );
 
       for( q=0 ; q<NUM_Q ; ++q ){
          Flux[q] = Fl[q] - w*Ul[q];
       }
    }else if( w > Sr ){
       flux( primR , Fr );
-      prim2cons( primR , Ur , gR , potR , GMrR , 1.0 );
+      prim2cons( primR , Ur , 0.0 , 0.0 , 0.0 , 1.0 );
 
       for( q=0 ; q<NUM_Q ; ++q ){
          Flux[q] = Fr[q] - w*Ur[q];
@@ -105,8 +85,8 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
          double aL =  Sr;
          double aR = -Sl;
  
-         prim2cons( primL , Ul , gL , potL , GMrL , 1.0 );
-         prim2cons( primR , Ur , gR , potR , GMrR , 1.0 );
+         prim2cons( primL , Ul , 0.0 , 0.0 , 0.0 , 1.0 );
+         prim2cons( primR , Ur , 0.0 , 0.0 , 0.0 , 1.0 );
          flux( primL , Fl );
          flux( primR , Fr );
 
@@ -121,16 +101,16 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
          double Uk[NUM_Q];
          double Fk[NUM_Q];
          if( w < Ss ){
-            prim2cons( primL , Uk , gL , potL , GMrL , 1.0 );
-            getUstar( primL , Ustar , Sl , Ss , gL , potL , GMrL ); 
+            prim2cons( primL , Uk , 0.0 , 0.0 , 0.0 , 1.0 );
+            getUstar( primL , Ustar , Sl , Ss ); 
             flux( primL , Fk ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){
                Flux[q] = Fk[q] + Sl*( Ustar[q] - Uk[q] ) - w*Ustar[q];
             }    
          }else{
-            prim2cons( primR , Uk , gR , potR , GMrR , 1.0 );
-            getUstar( primR , Ustar , Sr , Ss , gR , potR , GMrR ); 
+            prim2cons( primR , Uk , 0.0 , 0.0 , 0.0 , 1.0 );
+            getUstar( primR , Ustar , Sr , Ss ); 
             flux( primR , Fk ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){
@@ -140,17 +120,8 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
       }
    } 
  
-   if( grav_e_mode == 2 ) Flux[TAU] += fgrav + .5*potC*Flux[RHO];
-
-   if( grav_e_mode == 1 ){
-      double G = 1.0;
-      double m = cL->miph;
-      double egrav = -G*m*m/(8.*M_PI*pow(r,4.));
-      Flux[TAU] -= w*egrav;
-   }
-   
    if( grav_e_mode == 3 ){
-      double G = 1.0;
+      double G = grav_G;
       double m = cL->miph;
       double r = cL->riph;
       Flux[TAU] += -G*m/r*Flux[RHO];
@@ -160,8 +131,8 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
       double prim[NUM_Q];
       double consL[NUM_Q];
       double consR[NUM_Q];
-      prim2cons( cL->prim , consL , gL , potL , GMrL , 1.0 );
-      prim2cons( cR->prim , consR , gR , potR , GMrR , 1.0 );
+      prim2cons( cL->prim , consL , 0.0 , 0.0 , 0.0 , 1.0 );
+      prim2cons( cR->prim , consR , 0.0 , 0.0 , 0.0 , 1.0 );
       double gprim[NUM_Q];
       double gcons[NUM_Q];
       for( q=0 ; q<NUM_Q ; ++q ){

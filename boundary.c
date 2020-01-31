@@ -4,8 +4,9 @@
 double get_moment_arm( double , double );
 void initial( double * , double ); 
 double get_g( struct cell * );
+double get_GMr( struct cell * );
 double get_dV( double , double );
-void prim2cons( double * , double * , double , double , double );
+void prim2cons( double * , double * , double , double , double , double );
 
 void boundary( struct domain * theDomain ){
 
@@ -26,7 +27,9 @@ void boundary( struct domain * theDomain ){
       if( gE == 1 ) g = get_g( cB );
       double pot = 0.0;
       if( gE == 2 ) pot = cB->pot;
-      prim2cons( cB->prim , cB->cons , g , pot , dV ); 
+      double GMr = 0.0;
+      if( gE == 3 ) GMr = get_GMr( cB );
+      prim2cons( cB->prim , cB->cons , g , pot , GMr , dV ); 
    }
 /*
    if( rank == 0 ){

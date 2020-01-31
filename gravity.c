@@ -16,39 +16,37 @@ double get_g( struct cell * c ){
    double G = grav_G;
    double rp = c->riph;
    double rm = c->riph - c->dr;
-   double rc = .5*(rp+rm);
 
 
-//   double rc = pow( rp*rm*( rp*rp + rp*rm + rm*rm )/3. , .25 );
-
-   double frac = 1.0*(rp*rp*rp - rc*rc*rc)/(rp*rp*rp - rm*rm*rm);
-
-//   double G = 1.0; 
-   double M = c->miph-frac*c->dm;
-   double r = rc;
-   if( r==0 ) r = .5*(rp+rm);
-
+   double Mm = c->miph - c->dm;
+   double rho = c->dm/(4./3.*M_PI*(rp*rp*rp-rm*rm*rm));
 
    double r2_3 = (rp*rp + rm*rm + rp*rm)/3.;
    double r3_4 = (rp*rp*rp + rp*rp*rm + rp*rm*rm + rm*rm*rm)/4.;
-   double r4_5 = ( pow(rp,4.) + pow(rp,3.)*rm + rp*rp*rm*rm + rp*pow(rm,3.) + pow(rm,4.) )/5.;
 
-   double rhot = c->dm/(rp*rp*rp - rm*rm*rm);
-   double mt = c->miph - c->dm - rm*rm*rm*rhot;
+   double g = -G/r2_3*( Mm + 4./3.*M_PI*rho*(r3_4 - rm*rm*rm) );
 
-   double term1 = mt*mt/rp/rm;
-   if( rm == 0 ) term1 = 0.0;
-   double term2 = (rp+rm)*mt*rhot;
-   double term3 = r4_5*rhot*rhot;
-   
-   double e = (mt + r3_4*rhot)/r2_3;
-   double e2 = (term1+term2+term3)/r2_3;
-
+   return( g );
  
-//   return( -G*M/r/r );
-   return( -G*sqrt(e2) );
-//   return( -G*e );
+}
 
+double get_GMr( struct cell * c ){
+   double G = grav_G;
+   double rp = c->riph;
+   double rm = rp - c->dr;
+   double rc = .5*(rp+rm);
+   double M = c->miph - c->dm;
+   double dV = 4./3.*M_PI*(rp*rp*rp-rm*rm*rm);
+   double rho = c->dm/dV;
+//   double r = (rp*rp+rm*rm+rp*rm)/3./rc;
+   double r2_3 = (rp*rp + rm*rm + rp*rm)/3.;
+   double r4_5 = (pow(rp,4.) + pow(rp,3.)*rm + rp*rp*rm*rm + rp*pow(rm,3.) + pow(rm,4.) )/5.;
+
+   double mt = M - 4./3.*M_PI*rm*rm*rm*rho;
+
+   double eps = G/r2_3*( mt*rc + 4./3.*M_PI*rho*r4_5 );
+
+   return( eps );
 }
 
 void grav_src( struct cell * c , double dVdt ){

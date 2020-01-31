@@ -7,17 +7,31 @@ void setICparams( struct domain * theDomain ){
    gam = theDomain->theParList.Adiabatic_Index;
 }
 
+double get_fit_vel( double r ){
+
+   double a = 0.330363;
+   double b = 3.84388;
+   double c = 0.00475402;
+   double d = 5.13514;
+   double e = 4.75756;
+
+   double vel = ( a*r + c*pow(r,b) )*exp( -pow(r/d,e) );
+
+   return(vel);
+
+}
+
 void initial( double * prim , double r ){
 
-   double osc_fact = 1.0;
+//   double osc_fact = 1.0;
 
    double R = 1.0;///sqrt(2.*M_PI);
    double G = 1.0;
    double M = 1.0;///sqrt(2.*M_PI);
-   double rho_min = 5e-5*M/R/R/R;
+   double rho_min = 1e-7*M/R/R/R;
    double k = 2.;
 
-   r *= osc_fact;
+//   r *= osc_fact;
 
    double rhoc = M/R/R/R/4./M_PI/M_PI;
    double rho = rhoc*sin(r/R)/(r/R) + rho_min;
@@ -33,12 +47,14 @@ void initial( double * prim , double r ){
    double A = 0.0;
    Pp *= 1. + A*exp( -pow(r/.05/R,2.)/2./M_PI );
 
-   rho *= pow( osc_fact , 3. );
-   Pp  *= pow( osc_fact , 3.*gam );
+//   rho *= pow( osc_fact , 3. );
+//   Pp  *= pow( osc_fact , 3.*gam );
+
+   double v = 0.01*sqrt(G*M/R)*get_fit_vel( r/R );
 
    prim[RHO] = rho;
    prim[PPP] = Pp;
-   prim[VRR] = 0.0;
+   prim[VRR] = v;
    prim[XXX] = 0.0;
    prim[AAA] = 0.0;
 

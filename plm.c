@@ -10,11 +10,15 @@ double minmod( double a , double b , double c ){
    return(m);
 }
 
+double get_g( struct cell * );
+
 void plm( struct domain * theDomain ){
 
    struct cell * theCells = theDomain->theCells;
    int Nr = theDomain->Nr;
    double PLM = theDomain->theParList.PLM;
+   int Bal = theDomain->theParList.grav_bal;
+
    int i,q;
    for( i=0 ; i<Nr ; ++i ){
       int im = i-1;
@@ -31,6 +35,21 @@ void plm( struct domain * theDomain ){
          double pL = cL->prim[q];
          double pC = c->prim[q];
          double pR = cR->prim[q];
+         
+         if( q==PPP && Bal ){//&& i>0 && i<Nr-1){
+//Remove HSE solution from pL and pR
+            double gHSE_C = c->prim[RHO]*get_g(c);
+            double gHSE_L = cL->prim[RHO]*get_g(cL);
+            double gHSE_R = cR->prim[RHO]*get_g(cR);
+
+            double pHSE_L = pC - .5*gHSE_C*drC - .5*gHSE_L*drL;
+            double pHSE_R = pC + .5*gHSE_C*drC + .5*gHSE_R*drR;
+
+            pL -= pHSE_L;
+            pR -= pHSE_R;
+            pC = 0.0;
+         }
+
          double sL = pC - pL;
          sL /= .5*( drC + drL );
          double sR = pR - pC;
@@ -38,6 +57,7 @@ void plm( struct domain * theDomain ){
          double sC = pR - pL;
          sC /= .5*( drL + drR ) + drC;
          c->grad[q] = minmod( PLM*sL , sC , PLM*sR );
+
       }
    }
 }

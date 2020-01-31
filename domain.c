@@ -38,12 +38,13 @@ void setupDomain( struct domain * theDomain ){
 }
 
 void initial( double * , double ); 
-void prim2cons( double * , double * , double , double , double );
-void cons2prim( double * , double * , double , double , double );
+void prim2cons( double * , double * , double , double , double , double );
+void cons2prim( double * , double * , double , double , double , double );
 void restart( struct domain * ); 
 void calculate_mass( struct domain * );
 void calculate_pot( struct domain * );
 double get_g( struct cell * );
+double get_GMr( struct cell * );
 void calc_dp( struct domain * );
 void set_wcell( struct domain * );
 
@@ -61,8 +62,8 @@ void setupCells( struct domain * theDomain ){
       double r = get_moment_arm( rp , rm );
       double dV = get_dV( rp , rm );
       initial( c->prim , r ); 
-      prim2cons( c->prim , c->cons , 0.0 , 0.0 , dV );
-      cons2prim( c->cons , c->prim , 0.0 , 0.0 , dV );
+      prim2cons( c->prim , c->cons , 0.0 , 0.0 , 0.0 , dV );
+      cons2prim( c->cons , c->prim , 0.0 , 0.0 , 0.0 , dV );
    }
 
    int gE = theDomain->theParList.grav_e_mode;
@@ -79,8 +80,10 @@ void setupCells( struct domain * theDomain ){
          if( gE == 1 ) g = get_g( c );
          double pot = 0.0;
          if( gE == 2 ) pot = c->pot;
-         prim2cons( c->prim , c->cons , g , pot , dV );
-         cons2prim( c->cons , c->prim , g , pot , dV );
+         double GMr = 0.0;
+         if( gE == 3 ) GMr = get_GMr( c );
+         prim2cons( c->prim , c->cons , g , pot , GMr , dV );
+         cons2prim( c->cons , c->prim , g , pot , GMr , dV );
       }
    }
 }

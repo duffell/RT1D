@@ -90,6 +90,7 @@ int read_par_file( struct domain * theDomain ){
          err += readvar( pfile , "Gravity_G"         , VAR_DOUB , &(theList->grav_G)          );
          err += readvar( pfile , "Gravity_Pointmass" , VAR_DOUB , &(theList->grav_pointmass)  );
          err += readvar( pfile , "Gravity_E_Mode"    , VAR_INT  , &(theList->grav_e_mode)     );
+         err += readvar( pfile , "Gravity_Balanced"  , VAR_INT  , &(theList->grav_bal)        );
       }
       MPI_Barrier(MPI_COMM_WORLD);
    }

@@ -38,7 +38,7 @@ void output( struct domain * theDomain , char * filestart ){
             double rp = c->riph;
             double dr = c->dr; 
             double rm = rp-dr;
-            double r  = get_moment_arm( rp , rm );
+            double r  = .5*(rp+rm);//get_moment_arm( rp , rm );
             fprintf(pFile,"%e %e ",r,dr);
             for( q=0 ; q<NUM_Q ; ++q ){
                fprintf(pFile,"%e ",c->prim[q]);

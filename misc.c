@@ -4,6 +4,7 @@
 double get_dA( double );
 double get_dV( double , double );
 double get_g( struct cell * );
+double get_GMr( struct cell * );
 double get_moment_arm( double , double );
 
 double mindt( double * , double , double , double , double );
@@ -44,7 +45,7 @@ double getmindt( struct domain * theDomain ){
 }
 
 void initial( double * , double * );
-void cons2prim( double * , double * , double , double , double );
+void cons2prim( double * , double * , double , double , double , double );
 double get_vr( double * );
 
 void set_wcell( struct domain * theDomain ){
@@ -125,7 +126,7 @@ void calc_prim( struct domain * theDomain ){
 
    struct cell * theCells = theDomain->theCells;
    int gE = theDomain->theParList.grav_e_mode;
-   if( gE == 1 ) calculate_mass( theDomain );
+   if( gE ) calculate_mass( theDomain );
    if( gE == 2 ) calculate_pot( theDomain );
 
    int Nr = theDomain->Nr;
@@ -140,7 +141,9 @@ void calc_prim( struct domain * theDomain ){
       if( gE == 1 ) g = get_g( c );
       double pot = 0.0;
       if( gE == 2 ) pot = c->pot;
-      cons2prim( c->cons , c->prim , g , pot , dV );
+      double GMr = 0.0;
+      if( gE == 3 ) GMr = get_GMr( c );
+      cons2prim( c->cons , c->prim , g , pot , GMr , dV );
    }
 
 }
@@ -340,7 +343,9 @@ void AMR( struct domain * theDomain ){
       if( gE == 1 ) g = get_g( c );
       double pot = 0.0;
       if( gE == 2 ) pot = c->pot;
-      cons2prim( c->cons , c->prim , g , pot , dV );
+      double GMr = 0.0;
+      if( gE == 3 ) GMr = get_GMr( c );
+      cons2prim( c->cons , c->prim , g , pot , GMr , dV );
       //Shift Memory
       int blocksize = Nr-iSp-1;
       memmove( theCells+iSp , theCells+iSp+1 , blocksize*sizeof(struct cell) );
@@ -392,13 +397,16 @@ void AMR( struct domain * theDomain ){
       double dV = get_dV( r0 , rm );
       double g = 0.0;
       double pot = 0.0;
+      double GMr = 0.0;
       if( gE == 1 ) g = get_g( c );
       if( gE == 2 ) pot = c->pot;
-      cons2prim( c->cons , c->prim , g , pot , dV );
+      if( gE == 3 ) GMr = get_GMr( c );
+      cons2prim( c->cons , c->prim , g , pot , GMr , dV );
       dV = get_dV( rp , r0 );
       if( gE == 1 ) g = get_g( cp );
       if( gE == 2 ) pot = cp->pot;
-      cons2prim( cp->cons , cp->prim , g , pot , dV );
+      if( gE == 3 ) GMr = get_GMr( cp );
+      cons2prim( cp->cons , cp->prim , g , pot , GMr , dV );
 
    }
 

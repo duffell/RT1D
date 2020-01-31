@@ -6,20 +6,24 @@ static int riemann_solver = 0;
 static int rt_flag = 0;
 static double gamma_law = 1.0;
 static int grav_e_mode = 0;
+static int Bal = 0;
 
 void setRiemannParams( struct domain * theDomain ){
    riemann_solver = theDomain->theParList.Riemann_Solver;
    rt_flag = theDomain->theParList.rt_flag;
    gamma_law = theDomain->theParList.Adiabatic_Index;
    grav_e_mode = theDomain->theParList.grav_e_mode;
+   Bal = theDomain->theParList.grav_bal;
 }
 
-void prim2cons( double * , double * , double , double , double );
+void prim2cons( double * , double * , double , double , double , double );
 void flux( double * , double * );
-void getUstar( double * , double * , double , double , double , double );
+void getUstar( double * , double * , double , double , double , double , double );
 void vel( double * , double * , double * , double * , double * , double );
 double get_eta( double * , double * , double );
+
 double get_g( struct cell * );
+double get_GMr( struct cell * );
 
 void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
 
@@ -33,6 +37,15 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
    for( q=0 ; q<NUM_Q ; ++q ){
       primL[q] = cL->prim[q] + cL->grad[q]*drL;
       primR[q] = cR->prim[q] - cR->grad[q]*drR;
+   }
+
+   if( Bal ){
+      //Add HSE pressure gradient to pL and pR.
+      double gHSE_L = cL->prim[RHO]*get_g(cL);
+      double gHSE_R = cR->prim[RHO]*get_g(cR);
+
+      primL[PPP] += gHSE_L*drL;
+      primR[PPP] -= gHSE_R*drR;
    }
 
    double Sl,Sr,Ss;
@@ -55,6 +68,12 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
       potC = .5*(potL+potR);
       fgrav = cL->fgrav;
    }
+   double GMrL = 0.0;
+   double GMrR = 0.0;
+   if( grav_e_mode == 3 ){
+//      GMrL = get_GMr( cL );
+//      GMrR = get_GMr( cR );
+   }
 
    double Fl[NUM_Q];
    double Fr[NUM_Q];
@@ -67,14 +86,14 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
 
    if( w < Sl ){
       flux( primL , Fl );
-      prim2cons( primL , Ul , gL , potL , 1.0 );
+      prim2cons( primL , Ul , gL , potL , GMrL , 1.0 );
 
       for( q=0 ; q<NUM_Q ; ++q ){
          Flux[q] = Fl[q] - w*Ul[q];
       }
    }else if( w > Sr ){
       flux( primR , Fr );
-      prim2cons( primR , Ur , gR , potR , 1.0 );
+      prim2cons( primR , Ur , gR , potR , GMrR , 1.0 );
 
       for( q=0 ; q<NUM_Q ; ++q ){
          Flux[q] = Fr[q] - w*Ur[q];
@@ -86,8 +105,8 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
          double aL =  Sr;
          double aR = -Sl;
  
-         prim2cons( primL , Ul , gL , potL , 1.0 );
-         prim2cons( primR , Ur , gR , potR , 1.0 );
+         prim2cons( primL , Ul , gL , potL , GMrL , 1.0 );
+         prim2cons( primR , Ur , gR , potR , GMrR , 1.0 );
          flux( primL , Fl );
          flux( primR , Fr );
 
@@ -102,16 +121,16 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
          double Uk[NUM_Q];
          double Fk[NUM_Q];
          if( w < Ss ){
-            prim2cons( primL , Uk , gL , potL , 1.0 );
-            getUstar( primL , Ustar , Sl , Ss , gL , potL ); 
+            prim2cons( primL , Uk , gL , potL , GMrL , 1.0 );
+            getUstar( primL , Ustar , Sl , Ss , gL , potL , GMrL ); 
             flux( primL , Fk ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){
                Flux[q] = Fk[q] + Sl*( Ustar[q] - Uk[q] ) - w*Ustar[q];
             }    
          }else{
-            prim2cons( primR , Uk , gR , potR , 1.0 );
-            getUstar( primR , Ustar , Sr , Ss , gR , potR ); 
+            prim2cons( primR , Uk , gR , potR , GMrR , 1.0 );
+            getUstar( primR , Ustar , Sr , Ss , gR , potR , GMrR ); 
             flux( primR , Fk ); 
 
             for( q=0 ; q<NUM_Q ; ++q ){
@@ -129,13 +148,20 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
       double egrav = -G*m*m/(8.*M_PI*pow(r,4.));
       Flux[TAU] -= w*egrav;
    }
+   
+   if( grav_e_mode == 3 ){
+      double G = 1.0;
+      double m = cL->miph;
+      double r = cL->riph;
+      Flux[TAU] += -G*m/r*Flux[RHO];
+   }
 
    if( rt_flag ){
       double prim[NUM_Q];
       double consL[NUM_Q];
       double consR[NUM_Q];
-      prim2cons( cL->prim , consL , gL , potL , 1.0 );
-      prim2cons( cR->prim , consR , gR , potR , 1.0 );
+      prim2cons( cL->prim , consL , gL , potL , GMrL , 1.0 );
+      prim2cons( cR->prim , consR , gR , potR , GMrR , 1.0 );
       double gprim[NUM_Q];
       double gcons[NUM_Q];
       for( q=0 ; q<NUM_Q ; ++q ){

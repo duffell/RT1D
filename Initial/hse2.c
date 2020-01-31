@@ -22,6 +22,9 @@ void initial( double * prim , double r ){
    double rho = rhoc/pow( 1. + r*r/R/R/3. , 2.5 );
    double Pp = 2./3.*M_PI*G*rhoc*rhoc*R*R/pow( 1. + r*r/R/R/3. , 3. );
 
+   double A = 0.0; 
+   Pp *= 1. + A*exp( -pow(r/.05/R,2.)/2./M_PI );
+
    rho *= pow( osc_fact , 3. );
    Pp  *= pow( osc_fact , 3.*gam );
 

@@ -27,7 +27,7 @@ double get_vr( double * prim ){
    return( prim[VRR] );
 }
 
-void prim2cons( double * prim , double * cons , double g , double phi , double dV ){
+void prim2cons( double * prim , double * cons , double g , double phi , double GMr , double dV ){
    double rho = prim[RHO];
    double Pp  = prim[PPP];
    double vr  = prim[VRR];
@@ -35,7 +35,7 @@ void prim2cons( double * prim , double * cons , double g , double phi , double d
    double gam = GAMMA_LAW;
    double rhoe = Pp/(gam-1.);
 
-   double egrav = -g*g/8./M_PI/grav_G + .5*rho*phi;
+   double egrav = -g*g/8./M_PI/grav_G + .5*rho*phi - rho*GMr;
 
    cons[DDD] = rho*dV;
    cons[SRR] = rho*vr*dV;
@@ -47,13 +47,13 @@ void prim2cons( double * prim , double * cons , double g , double phi , double d
    }
 }
 
-void cons2prim( double * cons , double * prim , double g , double phi , double dV ){
+void cons2prim( double * cons , double * prim , double g , double phi , double GMr , double dV ){
 
    double rho = cons[DDD]/dV;
    double Sr  = cons[SRR]/dV;
    double E   = cons[TAU]/dV;
 
-   double egrav = -g*g/8./M_PI/grav_G + .5*rho*phi;
+   double egrav = -g*g/8./M_PI/grav_G + .5*rho*phi - rho*GMr;
 
    double vr = Sr/rho;
    double v2 = vr*vr;
@@ -75,7 +75,7 @@ void cons2prim( double * cons , double * prim , double g , double phi , double d
 
 }
 
-void getUstar( double * prim , double * Ustar , double Sk , double Ss , double g , double phi ){
+void getUstar( double * prim , double * Ustar , double Sk , double Ss , double g , double phi , double GMr ){
 
    double rho = prim[RHO];
    double vr  = prim[VRR];
@@ -85,7 +85,7 @@ void getUstar( double * prim , double * Ustar , double Sk , double Ss , double g
    double gam = GAMMA_LAW;
 
    double rhoe = Pp/(gam-1.);
-   double egrav = -g*g/8./M_PI/grav_G + .5*rho*phi;
+   double egrav = -g*g/8./M_PI/grav_G + .5*rho*phi - rho*GMr;
 
    double rhostar = rho*(Sk - vr)/(Sk - Ss);
    double Pstar = Pp*(Ss - vr)/(Sk - Ss);

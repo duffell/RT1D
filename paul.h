@@ -28,6 +28,7 @@ struct param_list{
    int grav_flag, grow_flag;
    double grav_G, grav_pointmass;
    int grav_e_mode;
+   int grav_bal;
 
    double CFL, PLM;
    double Density_Floor, Pressure_Floor;

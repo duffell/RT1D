@@ -1,10 +1,16 @@
 
 #include "../paul.h"
 
+double gam = 1.0;
+
 void setICparams( struct domain * theDomain ){
+   gam = theDomain->theParList.Adiabatic_Index;
 }
 
 void initial( double * prim , double r ){
+
+   double osc_fact = 1.0;
+   r *= osc_fact;
 
    double rho0 = 1.0;
    double rho1 = 1.0;
@@ -25,6 +31,8 @@ void initial( double * prim , double r ){
       P   = PB*pow(R/r,1.+k) + PC*pow( R/r , 1.+k ) + PD*pow( R/r , 2.*k-2. ) ;
    }
 
+   rho *= pow( osc_fact , 3. );
+   P   *= pow( osc_fact , 3.*gam );
 //   if( r < .25 ) P += 10.;
 
    prim[RHO] = rho;

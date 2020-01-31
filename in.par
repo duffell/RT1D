@@ -11,7 +11,7 @@ Num_Checkpoints		10
 Use_Logtime		0
 
 //Grid Dimensions//
-Num_R			512
+Num_R			256
 R_Min			0.0 //4e8 //3e-3 //1e9  //0.0
 R_Max			10.0 //2e15 //7e10
 Log_Zoning		2 //1	//0=Uniform, 1=Log, 2=Hybrid
@@ -30,13 +30,15 @@ Pressure_Floor		1e-8 //1e-20
 Absorb_Inner		0
 
 //Hydro Parameters
-Adiabatic_Index		1.4 //1.33333333333 //1.666666666667
+Adiabatic_Index		1.666667 //1.33333333333 //1.666666666667
 
 //Gravity Parameters
 Gravity_Switch		1
 Gravity_G		1.0 //6.67428e-8
 Gravity_Pointmass	0.0 //3.02e33
-Gravity_E_Mode		1   //0 = Source term, 1 = g field, 2 = pot
+Gravity_E_Mode		3   //0 = Source term, 1 = g field, 2 = pot, 3 = G m/r
+Gravity_Balanced	1
+
 
 //RT Model Parameters
 Use_RT			0

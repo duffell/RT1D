@@ -10,6 +10,9 @@ void report( struct domain * theDomain ){
    int rank = theDomain->rank;
    int size = theDomain->size;
    double t = theDomain->t;
+   
+   double gam = theDomain->theParList.Adiabatic_Index;
+   double G_const = theDomain->theParList.grav_G;
 
    double Mach_Avg = 0.0;
    double Mass   = 0.0;
@@ -17,7 +20,7 @@ void report( struct domain * theDomain ){
    double Turb = 0.0;
    double r_dens = 0.0;
    double r_shock = 0.0;
-   double E_Hydro = 0.0;
+   double E_Therm = 0.0;
    double E_Kin   = 0.0;
    double E_Grav  = 0.0;
    int imin = Ng;
@@ -50,9 +53,12 @@ void report( struct domain * theDomain ){
       XMass += theCells[i].cons[XXX];
       Turb += theCells[i].cons[AAA];
       Mach_Avg += fabs(v)/cs*theCells[i].cons[DDD];
-      E_Hydro += theCells[i].cons[TAU];
+
+      double m = theCells[i].miph - theCells[i].dm;
+
+      E_Therm += theCells[i].cons[DDD]/theCells[i].prim[RHO]*P/(gam-1.);
       E_Kin += .5*theCells[i].cons[DDD]*v*v;
-      E_Grav  += .5*theCells[i].cons[DDD]*theCells[i].pot;
+      E_Grav  += -G_const*m/r*theCells[i].cons[DDD];//.5*theCells[i].cons[DDD]*theCells[i].pot;
 
       double alpha = theCells[i].prim[AAA];
       double X   = theCells[i].prim[XXX];
@@ -78,7 +84,7 @@ void report( struct domain * theDomain ){
    MPI_Allreduce( MPI_IN_PLACE , &Mass , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
    MPI_Allreduce( MPI_IN_PLACE , &XMass , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
    MPI_Allreduce( MPI_IN_PLACE , &Turb , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
-   MPI_Allreduce( MPI_IN_PLACE , &E_Hydro , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
+   MPI_Allreduce( MPI_IN_PLACE , &E_Therm , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
    MPI_Allreduce( MPI_IN_PLACE , &E_Kin , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
    MPI_Allreduce( MPI_IN_PLACE , &E_Grav , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
    MPI_Allreduce( MPI_IN_PLACE , &Mach_Avg , 1 , MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD );
@@ -107,7 +113,7 @@ void report( struct domain * theDomain ){
 
    if( rank==0 ){
       FILE * pFile = fopen("report.dat","a");
-      fprintf(pFile,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e\n", t , r_dens , Mach_Avg , E_Hydro , E_Grav , r_avg , r2_avg , rho_avg , v_avg , a_avg , grho_avg , gP_avg , P_avg , Mass , XMass , E_Kin , Turb , r_shock );
+      fprintf(pFile,"%e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e\n", t , r_dens , Mach_Avg , E_Therm , E_Grav , E_Kin , r2_avg , rho_avg , v_avg , a_avg , grho_avg , gP_avg , P_avg , Mass , XMass , E_Kin , Turb , r_shock );
       fclose(pFile);
    }
 

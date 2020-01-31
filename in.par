@@ -36,7 +36,7 @@ Adiabatic_Index		1.666667 //1.33333333333 //1.666666666667
 Gravity_Switch		1
 Gravity_G		1.0 //6.67428e-8
 Gravity_Pointmass	0.0 //3.02e33
-Gravity_E_Mode		3   //0 = Source term, 1 = g field, 2 = pot, 3 = G m/r
+Gravity_E_Mode		3   //0 = Source term, 3 = Energy term: G m/r
 Gravity_Balanced	1
 
 

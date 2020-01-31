@@ -6,7 +6,7 @@ void initial( double * , double );
 double get_g( struct cell * );
 double get_GMr( struct cell * );
 double get_dV( double , double );
-void prim2cons( double * , double * , double , double , double , double );
+void prim2cons( double * , double * , double , double );
 
 void boundary( struct domain * theDomain ){
 
@@ -26,7 +26,7 @@ void boundary( struct domain * theDomain ){
 
       double GMr = 0.0;
       if( gE == 3 ) GMr = get_GMr( cB );
-      prim2cons( cB->prim , cB->cons , 0.0 , 0.0 , GMr , dV ); 
+      prim2cons( cB->prim , cB->cons , GMr , dV ); 
 
    }
 /*

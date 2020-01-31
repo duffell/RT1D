@@ -45,7 +45,7 @@ double getmindt( struct domain * theDomain ){
 }
 
 void initial( double * , double * );
-void cons2prim( double * , double * , double , double , double , double );
+void cons2prim( double * , double * , double , double );
 double get_vr( double * );
 
 void set_wcell( struct domain * theDomain ){
@@ -143,7 +143,7 @@ void calc_prim( struct domain * theDomain ){
 //      if( gE == 2 ) pot = c->pot;
       double GMr = 0.0;
       if( gE == 3 ) GMr = get_GMr( c );
-      cons2prim( c->cons , c->prim , 0.0 , 0.0 , GMr , dV );
+      cons2prim( c->cons , c->prim , GMr , dV );
    }
 
 }
@@ -345,7 +345,7 @@ void AMR( struct domain * theDomain ){
 //      if( gE == 2 ) pot = c->pot;
       double GMr = 0.0;
       if( gE == 3 ) GMr = get_GMr( c );
-      cons2prim( c->cons , c->prim , 0.0 , 0.0 , GMr , dV );
+      cons2prim( c->cons , c->prim , GMr , dV );
       //Shift Memory
       int blocksize = Nr-iSp-1;
       memmove( theCells+iSp , theCells+iSp+1 , blocksize*sizeof(struct cell) );
@@ -401,12 +401,12 @@ void AMR( struct domain * theDomain ){
 //      if( gE == 1 ) g = get_g( c );
 //      if( gE == 2 ) pot = c->pot;
       if( gE == 3 ) GMr = get_GMr( c );
-      cons2prim( c->cons , c->prim , 0.0 , 0.0 , GMr , dV );
+      cons2prim( c->cons , c->prim , GMr , dV );
       dV = get_dV( rp , r0 );
 //      if( gE == 1 ) g = get_g( cp );
 //      if( gE == 2 ) pot = cp->pot;
       if( gE == 3 ) GMr = get_GMr( cp );
-      cons2prim( cp->cons , cp->prim , 0.0 , 0.0 , GMr , dV );
+      cons2prim( cp->cons , cp->prim , GMr , dV );
 
    }
 

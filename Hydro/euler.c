@@ -27,7 +27,7 @@ double get_vr( double * prim ){
    return( prim[VRR] );
 }
 
-void prim2cons( double * prim , double * cons , double g , double phi , double GMr , double dV ){
+void prim2cons( double * prim , double * cons , double GMr , double dV ){
    double rho = prim[RHO];
    double Pp  = prim[PPP];
    double vr  = prim[VRR];
@@ -47,7 +47,7 @@ void prim2cons( double * prim , double * cons , double g , double phi , double G
    }
 }
 
-void cons2prim( double * cons , double * prim , double g , double phi , double GMr , double dV ){
+void cons2prim( double * cons , double * prim , double GMr , double dV ){
 
    double rho = cons[DDD]/dV;
    double Sr  = cons[SRR]/dV;

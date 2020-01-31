@@ -18,7 +18,7 @@ void setRiemannParams( struct domain * theDomain ){
    grav_G = theDomain->theParList.grav_G;
 }
 
-void prim2cons( double * , double * , double , double , double , double );
+void prim2cons( double * , double * , double , double );
 void flux( double * , double * );
 void getUstar( double * , double * , double , double );
 void vel( double * , double * , double * , double * , double * , double );
@@ -66,14 +66,14 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
 
    if( w < Sl ){
       flux( primL , Fl );
-      prim2cons( primL , Ul , 0.0 , 0.0 , 0.0 , 1.0 );
+      prim2cons( primL , Ul , 0.0 , 1.0 );
 
       for( q=0 ; q<NUM_Q ; ++q ){
          Flux[q] = Fl[q] - w*Ul[q];
       }
    }else if( w > Sr ){
       flux( primR , Fr );
-      prim2cons( primR , Ur , 0.0 , 0.0 , 0.0 , 1.0 );
+      prim2cons( primR , Ur , 0.0 , 1.0 );
 
       for( q=0 ; q<NUM_Q ; ++q ){
          Flux[q] = Fr[q] - w*Ur[q];
@@ -85,8 +85,8 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
          double aL =  Sr;
          double aR = -Sl;
  
-         prim2cons( primL , Ul , 0.0 , 0.0 , 0.0 , 1.0 );
-         prim2cons( primR , Ur , 0.0 , 0.0 , 0.0 , 1.0 );
+         prim2cons( primL , Ul , 0.0 , 1.0 );
+         prim2cons( primR , Ur , 0.0 , 1.0 );
          flux( primL , Fl );
          flux( primR , Fr );
 
@@ -101,7 +101,7 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
          double Uk[NUM_Q];
          double Fk[NUM_Q];
          if( w < Ss ){
-            prim2cons( primL , Uk , 0.0 , 0.0 , 0.0 , 1.0 );
+            prim2cons( primL , Uk , 0.0 , 1.0 );
             getUstar( primL , Ustar , Sl , Ss ); 
             flux( primL , Fk ); 
 
@@ -109,7 +109,7 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
                Flux[q] = Fk[q] + Sl*( Ustar[q] - Uk[q] ) - w*Ustar[q];
             }    
          }else{
-            prim2cons( primR , Uk , 0.0 , 0.0 , 0.0 , 1.0 );
+            prim2cons( primR , Uk , 0.0 , 1.0 );
             getUstar( primR , Ustar , Sr , Ss ); 
             flux( primR , Fk ); 
 
@@ -131,8 +131,8 @@ void riemann( struct cell * cL , struct cell * cR, double r , double dAdt ){
       double prim[NUM_Q];
       double consL[NUM_Q];
       double consR[NUM_Q];
-      prim2cons( cL->prim , consL , 0.0 , 0.0 , 0.0 , 1.0 );
-      prim2cons( cR->prim , consR , 0.0 , 0.0 , 0.0 , 1.0 );
+      prim2cons( cL->prim , consL , 0.0 , 1.0 );
+      prim2cons( cR->prim , consR , 0.0 , 1.0 );
       double gprim[NUM_Q];
       double gcons[NUM_Q];
       for( q=0 ; q<NUM_Q ; ++q ){
